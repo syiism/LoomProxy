@@ -5,11 +5,10 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from . import BaseHandler
+from .base import BaseHandler
 
 
 class BookDetail(BaseModel):
-    """书籍详情返回结构"""
     bookType: str
     bookTypeCode: int
     authorId: str
@@ -36,7 +35,6 @@ class BookDetail(BaseModel):
 
 
 class DetailBaseHandler(BaseHandler):
-    """详情基础处理器（抽象基类）"""
     response_model = BookDetail
 
     @abstractmethod

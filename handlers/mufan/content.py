@@ -4,17 +4,16 @@ from typing import Any
 
 import httpx
 
-from ..base.base import HandlerRegistry
-from ..base.contentBase import ContentBaseHandler, ContentResponse
-from .detail import _detect_book_type
-
-_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+from base.base import HandlerRegistry
+from base.contentBase import ContentBaseHandler, ContentResponse
+from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
+from utils.fq_utils import _detect_book_type
 
 
 async def _fetch_novel(api_base: str, item_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/content?item_ids={item_id}"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         content = resp.json().get("data", {}).get("content", "")
@@ -26,7 +25,7 @@ async def _fetch_novel(api_base: str, item_id: str) -> ContentResponse:
 async def _fetch_audio(api_base: str, item_id: str, tone_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/content?item_ids={item_id}&ts=听书&tone_id={tone_id}"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
@@ -43,7 +42,7 @@ async def _fetch_audio(api_base: str, item_id: str, tone_id: str) -> ContentResp
 async def _fetch_manga(api_base: str, item_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/manga?item_ids={item_id}"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         images = resp.json().get("data", {}).get("images", [])
@@ -58,7 +57,7 @@ async def _fetch_video(api_base: str, item_id: str, book_id: str, quality: str) 
     if quality:
         url += f"&quality={quality}"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
@@ -82,12 +81,12 @@ class MufanContentHandler(ContentBaseHandler):
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
         base_url = kwargs.get("base_url", "").rstrip("/")
-        api_base = base_url + "/api" if not base_url.endswith("/api") else base_url
+        api_base = normalize_api_base(base_url, "/api")
         book_id = kwargs.get("book_id", "")
 
         try:
             url = f"{api_base}/detail?book_id={book_id}"
-            async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
                 resp = await client.get(url)
             resp.raise_for_status()
             book_type = _detect_book_type(resp.json().get("data", {}))

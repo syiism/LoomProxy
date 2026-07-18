@@ -4,48 +4,10 @@ from typing import Any
 
 import httpx
 
-from ..base.base import HandlerRegistry
-from ..base.contentBase import ContentBaseHandler, ContentResponse
-from ..base.exploreBase import ExploreBaseHandler, ExploreResponse
-from ..base.searchBase import BookItem
-from .search import build_book_item
-
-_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
-
-
-def _api_base(base_url: str) -> str:
-    base = base_url.rstrip("/")
-    return base + "/api" if not base.endswith("/api") else base
-
-
-def _build_book_item(d: dict[str, Any]) -> BookItem:
-    return BookItem(
-        bookId=d.get("book_id", ""),
-        name=d.get("book_name", ""),
-        author=d.get("author", ""),
-        kind=_build_kind(d),
-        wordCount=str(d.get("word_number", "")),
-        lastChapter=d.get("last_chapter_title", ""),
-        intro=d.get("abstract", ""),
-        coverUrl=d.get("thumb_url", ""),
-    )
-
-
-def _build_kind(item: dict[str, Any]) -> str:
-    parts = []
-    gender = item.get("gender", "")
-    score = item.get("score", "")
-    category = item.get("category", "")
-    status = item.get("creation_status", "")
-    if gender:
-        parts.append({"1": "男生", "2": "女生", "0": "女生"}.get(str(gender), ""))
-    if score:
-        parts.append(f"{score}分")
-    if category:
-        parts.append(category)
-    if status:
-        parts.append("连载" if str(status) == "1" else "完结")
-    return ",".join(p for p in parts if p)
+from base.base import HandlerRegistry
+from base.contentBase import ContentBaseHandler, ContentResponse
+from base.exploreBase import ExploreBaseHandler, ExploreResponse
+from utils.fq_utils import DEFAULT_TIMEOUT, build_book_item, normalize_api_base
 
 
 @HandlerRegistry.register
@@ -57,11 +19,11 @@ class MufanFrontHandler(ContentBaseHandler):
     description = "mufan 发现页分类"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
-        base_url = _api_base(kwargs.get("base_url", ""))
+        base_url = normalize_api_base(kwargs.get("base_url", ""))
         tab = kwargs.get("tab", "0")
 
         url = f"{base_url}/front?tab={tab}"
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
@@ -80,7 +42,7 @@ class MufanLandingHandler(ExploreBaseHandler):
     description = "mufan 分类落地页书籍列表"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
-        base_url = _api_base(kwargs.get("base_url", ""))
+        base_url = normalize_api_base(kwargs.get("base_url", ""))
         category_id = kwargs.get("category_id", "")
         offset = kwargs.get("offset", "0")
 
@@ -90,11 +52,11 @@ class MufanLandingHandler(ExploreBaseHandler):
             if val:
                 url += f"&{param}={val}"
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         book_info = resp.json().get("data", {}).get("book_info", [])
-        book_list = [_build_book_item(item) for item in book_info if item.get("book_id")]
+        book_list = [build_book_item(item) for item in book_info if item.get("book_id")]
         return ExploreResponse(bookList=book_list)
 
 
@@ -107,13 +69,13 @@ class MufanRecommendHandler(ExploreBaseHandler):
     description = "mufan 首页推荐"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
-        base_url = _api_base(kwargs.get("base_url", ""))
+        base_url = normalize_api_base(kwargs.get("base_url", ""))
         tab_type = kwargs.get("tab_type", "2")
         offset = kwargs.get("offset", "0")
 
         url = f"{base_url}/recommend/homepage?tab_type={tab_type}&offset={offset}"
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         body = resp.json()
@@ -132,7 +94,7 @@ class MufanRankHandler(ExploreBaseHandler):
     description = "mufan 排行榜"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
-        base_url = _api_base(kwargs.get("base_url", ""))
+        base_url = normalize_api_base(kwargs.get("base_url", ""))
         genre_tab = kwargs.get("genre_tab", "2")
         algo_type = kwargs.get("algo_type", "101")
         offset = kwargs.get("offset", "0")
@@ -140,7 +102,7 @@ class MufanRankHandler(ExploreBaseHandler):
 
         url = f"{base_url}/bookmall/cell/change?genre_tab={genre_tab}&algo_type={algo_type}&offset={offset}&limit={limit}"
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         body = resp.json()

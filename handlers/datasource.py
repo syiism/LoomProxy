@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from .base.base import BaseHandler, HandlerRegistry
+from base.base import BaseHandler, HandlerRegistry
 
 
 class DatasourcesResponse(BaseModel):

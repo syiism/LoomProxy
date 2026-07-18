@@ -4,8 +4,9 @@ import json
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
-from ..base.detailBase import BookDetail, DetailBaseHandler
-from ..base.base import HandlerRegistry
+from base.detailBase import BookDetail, DetailBaseHandler
+from base.base import HandlerRegistry
+from utils.fq_utils import DEFAULT_TIMEOUT, _detect_book_type, book_type_code, normalize_api_base
 
 
 def _format_time(ts_str: str) -> str:
@@ -69,45 +70,6 @@ def _roles_from_raw(raw: Any) -> str:
     return ""
 
 
-def _detect_book_type(data: dict[str, Any]) -> str:
-    """根据详情字段判断书籍类型。"""
-    book_type = data.get("book_type", "")
-    genre = data.get("genre", "")
-    is_ebook = data.get("is_ebook", "")
-    comic_book_type = data.get("comic_book_type")
-    playlet_book_id = data.get("playlet_book_id")
-    schedule_mode = data.get("schedule_mode")
-    album_book_order = data.get("album_book_order")
-
-    if book_type == "1" or genre == "4":
-        return "tingshu"
-    if comic_book_type is not None or genre == "1":
-        return "manhua"
-    if playlet_book_id is not None:
-        return "duanju"
-    if genre == "205" and schedule_mode is not None:
-        if album_book_order is not None:
-            return "duanju"
-        return "manju"
-    if genre == "203":
-        return "duanju"
-    if is_ebook == "1" or genre == "0":
-        return "xiaoshuo"
-    return "xiaoshuo"
-
-
-_BOOK_TYPE_CODE_MAP = {
-    "xiaoshuo": 8,
-    "tingshu": 32,
-    "duanju": 4,
-    "manju": 4,
-    "manhua": 64,
-}
-
-
-def _book_type_code(book_type: str) -> int:
-    return _BOOK_TYPE_CODE_MAP.get(book_type, 8)
-
 
 @HandlerRegistry.register
 class TutuDetailHandler(DetailBaseHandler):
@@ -119,14 +81,13 @@ class TutuDetailHandler(DetailBaseHandler):
     description = "tutu 详情"
 
     async def handle(self, **kwargs: Any) -> BookDetail:
-        base_url = kwargs.get("base_url", "").rstrip('/') + "/api/v1"
+        base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
         book_id = kwargs.get("book_id", "")
 
         import httpx
 
         url = f"{base_url.rstrip('/')}/books/{book_id}"
-        timeout = httpx.Timeout(10.0, connect=5.0)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         d = resp.json()["data"]
@@ -134,7 +95,7 @@ class TutuDetailHandler(DetailBaseHandler):
         book_type = _detect_book_type(d)
         return BookDetail(
             bookType=book_type,
-            bookTypeCode=_book_type_code(book_type),
+            bookTypeCode=book_type_code(book_type),
             authorId=d.get("author_id", ""),
             bookId=d.get("book_id", ""),
             name=d.get("original_book_name", "") or d.get("book_name", ""),

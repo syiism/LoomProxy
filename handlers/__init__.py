@@ -7,7 +7,7 @@ import pkgutil
 from typing import TYPE_CHECKING
 
 # 导入 base 下的处理器模块，触发 @HandlerRegistry.register
-from .base import BaseHandler, HandlerRegistry
+from base import BaseHandler, HandlerRegistry
 
 if TYPE_CHECKING:
     pass
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 def _auto_discover() -> None:
     """遍历本包下的所有模块，触发 @register 的执行"""
     for module_info in pkgutil.iter_modules(__path__):
-        if module_info.name == "base":
-            continue
         importlib.import_module(f"{__name__}.{module_info.name}")
 
 

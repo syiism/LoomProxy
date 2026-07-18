@@ -5,17 +5,16 @@ from typing import Any
 
 import httpx
 
-from ..base.base import HandlerRegistry
-from ..base.contentBase import ContentBaseHandler, ContentResponse
-from .detail import _detect_book_type
-
-_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+from base.base import HandlerRegistry
+from base.contentBase import ContentBaseHandler, ContentResponse
+from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
+from utils.fq_utils import _detect_book_type
 
 
 async def _fetch_novel(base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/chapters/{item_id}/novel"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         content = resp.json().get("data", {}).get("content", "")
@@ -27,7 +26,7 @@ async def _fetch_novel(base_url: str, item_id: str) -> ContentResponse:
 async def _fetch_audio(base_url: str, item_id: str, book_id: str, tone_id: str) -> ContentResponse:
     async def _fetch(tid: str) -> dict[str, Any]:
         url = f"{base_url.rstrip('/')}/audio/play?item_ids={item_id}&book_id={book_id}&tone_id={tid}"
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.post(url)
         resp.raise_for_status()
         return resp.json()
@@ -71,7 +70,7 @@ async def _fetch_audio(base_url: str, item_id: str, book_id: str, tone_id: str) 
 async def _fetch_manga(base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/manga/{item_id}"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         images = resp.json().get("data", {}).get("images", [])
@@ -85,7 +84,7 @@ async def _fetch_manga(base_url: str, item_id: str) -> ContentResponse:
 
 async def _fetch_video(base_url: str, video_ids: str, quality: str) -> ContentResponse:
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             if not quality:
                 url = f"{base_url.rstrip('/')}/videos/multi?video_ids={video_ids}&list_qualities=1"
                 resp = await client.get(url)
@@ -131,13 +130,13 @@ class TutuContentHandler(ContentBaseHandler):
     description = "tutu 统一内容（自动识别类型分发：小说/听书/漫画/短剧/漫剧）"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
-        base_url = kwargs.get("base_url", "").rstrip('/') + "/api/v1"
+        base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
         book_id = kwargs.get("book_id", "")
 
         # 获取书籍类型
         try:
             url = f"{base_url.rstrip('/')}/books/{book_id}"
-            async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
                 resp = await client.get(url)
             resp.raise_for_status()
             book_type = _detect_book_type(resp.json().get("data", {}))

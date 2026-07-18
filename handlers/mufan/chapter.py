@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Any
 
 import httpx
 
-from ..base.base import HandlerRegistry
-from ..base.chapterBase import ChapterBaseHandler, ChapterItem, ChapterResponse
-
-TZ_SHANGHAI = timezone(timedelta(hours=8))
-_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+from base.base import HandlerRegistry
+from base.chapterBase import ChapterBaseHandler, ChapterItem, ChapterResponse
+from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, normalize_api_base
 
 
 def build_chapter_info(item: dict[str, Any]) -> str:
@@ -45,11 +43,11 @@ class MufanChapterHandler(ChapterBaseHandler):
 
     async def handle(self, **kwargs: Any) -> ChapterResponse:
         base_url = kwargs.get("base_url", "").rstrip("/")
-        api_base = base_url + "/api" if not base_url.endswith("/api") else base_url
+        api_base = normalize_api_base(base_url, "/api")
         book_id = kwargs.get("book_id", "")
 
         url = f"{api_base}/directory?book_id={book_id}"
-        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})

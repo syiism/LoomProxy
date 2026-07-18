@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from . import BaseHandler
+from .base import BaseHandler
 
 
 class ContentResponse(BaseModel):

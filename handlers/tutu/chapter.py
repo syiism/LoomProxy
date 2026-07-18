@@ -1,12 +1,10 @@
 from __future__ import annotations
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Any
 
-from ..base.chapterBase import ChapterBaseHandler, ChapterResponse, ChapterItem
-from ..base.base import HandlerRegistry
-
-
-TZ_SHANGHAI = timezone(timedelta(hours=8))
+from base.chapterBase import ChapterBaseHandler, ChapterResponse, ChapterItem
+from base.base import HandlerRegistry
+from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, normalize_api_base
 
 
 def parse_chapter_list_item(chapter_list_with_volume: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -65,14 +63,14 @@ class TutuChapterHandler(ChapterBaseHandler):
     description = "tutu 章节"
 
     async def handle(self, **kwargs: Any) -> ChapterResponse:
-        base_url = kwargs.get("base_url", "").rstrip('/') + "/api/v1"
+        base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
         book_id = kwargs.get("book_id", "")
+
         import httpx
 
         url = f"{base_url}/books/{book_id}/directory/fanqie"
 
-        timeout = httpx.Timeout(10.0, connect=5.0)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json()
@@ -81,7 +79,4 @@ class TutuChapterHandler(ChapterBaseHandler):
         raw_list = parse_chapter_list_item(chapter_list_with_volume)
         chapter_list = [build_chapter_item(item) for item in raw_list]
 
-        return ChapterResponse(
-            chapterList=chapter_list,
-            nextTocUrl=None,
-        )
+        return ChapterResponse(chapterList=chapter_list, nextTocUrl=None)
