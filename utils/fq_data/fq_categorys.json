@@ -1,0 +1,61 @@
+{
+  "2": {
+    "category_name": "小说",
+    "is_selected": true,
+    "sub_items": [
+      { "show_name": "推荐榜", "selector_item_id": "101", "is_selected": true },
+      { "show_name": "完本榜", "selector_item_id": "100", "is_selected": false },
+      { "show_name": "新书榜", "selector_item_id": "108", "is_selected": false },
+      { "show_name": "书友榜", "selector_item_id": "207", "is_selected": false },
+      { "show_name": "追更榜", "selector_item_id": "109", "is_selected": false },
+      { "show_name": "黑马榜", "selector_item_id": "102", "is_selected": false },
+      { "show_name": "礼物榜", "selector_item_id": "188", "is_selected": false },
+      { "show_name": "阅读榜", "selector_item_id": "111", "is_selected": false }
+    ]
+  },
+  "3": {
+    "category_name": "出版",
+    "is_selected": false,
+    "sub_items": [
+      { "show_name": "热门榜", "selector_item_id": "210", "is_selected": false },
+      { "show_name": "影视原著榜", "selector_item_id": "211", "is_selected": false },
+      { "show_name": "典藏榜", "selector_item_id": "196", "is_selected": false },
+      { "show_name": "知识榜", "selector_item_id": "212", "is_selected": false },
+      { "show_name": "名家榜", "selector_item_id": "213", "is_selected": false },
+      { "show_name": "飙升榜", "selector_item_id": "197", "is_selected": false }
+    ]
+  },
+  "4": {
+    "category_name": "短剧",
+    "is_selected": false,
+    "sub_items": [
+      { "show_name": "短剧榜", "selector_item_id": "502", "is_selected": false },
+      { "show_name": "推荐榜", "selector_item_id": "503", "is_selected": false },
+      { "show_name": "热播榜", "selector_item_id": "504", "is_selected": false },
+      { "show_name": "飙升榜", "selector_item_id": "505", "is_selected": false },
+      { "show_name": "新剧榜", "selector_item_id": "506", "is_selected": false },
+      { "show_name": "热搜榜", "selector_item_id": "507", "is_selected": false }
+    ]
+  },
+  "5": {
+    "category_name": "漫剧",
+    "is_selected": false,
+    "sub_items": [
+      { "show_name": "推荐榜", "selector_item_id": "550", "is_selected": false }
+    ]
+  },
+  "6": {
+    "category_name": "听书",
+    "is_selected": false,
+    "sub_items": [
+      { "show_name": "听书榜", "selector_item_id": "201", "is_selected": false }
+    ]
+  },
+  "7": {
+    "category_name": "短篇",
+    "is_selected": false,
+    "sub_items": [
+      { "show_name": "短篇榜", "selector_item_id": "601", "is_selected": false }
+    ]
+  }
+}

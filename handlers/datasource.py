@@ -10,6 +10,8 @@ from base.base import BaseHandler, HandlerRegistry
 class DatasourcesResponse(BaseModel):
     names: list[str]
     sources: dict[str, str]
+    fileSources: list[str]
+    fileNames: dict[str, list]
 
 
 @HandlerRegistry.register
@@ -23,9 +25,12 @@ class DatasourceHandler(BaseHandler):
     response_model = DatasourcesResponse
 
     async def handle(self, **kwargs: Any) -> DatasourcesResponse:
-        resp =  {
+        sources =  {
             "番茄（兔兔）": "tutu",
             "番茄（沐凡）": "mufan"
         }
         names = ["番茄（兔兔）", "番茄（沐凡）"]
-        return DatasourcesResponse(names=names, sources=resp)
+        fileSources = ['fq']
+        fileNames = {'fq': ['fq_moduleMap.json', 'fq_sytjs.json', 'fq_categorys.json']}
+        
+        return DatasourcesResponse(names=names, sources=sources, fileSources=fileSources, fileNames=fileNames)
