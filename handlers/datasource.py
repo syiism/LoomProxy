@@ -24,8 +24,8 @@ class DatasourceHandler(BaseHandler):
 
     async def handle(self, **kwargs: Any) -> DatasourcesResponse:
         resp =  {
-            "兔兔（番茄）": "tutu",
-            "沐凡（番茄）": "mufan"
+            "番茄（兔兔）": "tutu",
+            "番茄（沐凡）": "mufan"
         }
-        names = ["兔兔（番茄）", "沐凡（番茄）"]
+        names = ["番茄（兔兔）", "番茄（沐凡）"]
         return DatasourcesResponse(names=names, sources=resp)
