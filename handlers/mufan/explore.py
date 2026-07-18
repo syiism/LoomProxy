@@ -8,6 +8,7 @@ from ..base.base import HandlerRegistry
 from ..base.contentBase import ContentBaseHandler, ContentResponse
 from ..base.exploreBase import ExploreBaseHandler, ExploreResponse
 from ..base.searchBase import BookItem
+from .search import build_book_item
 
 _TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 
@@ -94,4 +95,56 @@ class MufanLandingHandler(ExploreBaseHandler):
         resp.raise_for_status()
         book_info = resp.json().get("data", {}).get("book_info", [])
         book_list = [_build_book_item(item) for item in book_info if item.get("book_id")]
+        return ExploreResponse(bookList=book_list)
+
+
+@HandlerRegistry.register
+class MufanRecommendHandler(ExploreBaseHandler):
+    path = "/mufan/recommend"
+    name = "mufan_recommend"
+    methods = ["GET"]
+    query_params = ["base_url", "tab_type", "offset"]
+    description = "mufan 首页推荐"
+
+    async def handle(self, **kwargs: Any) -> ExploreResponse:
+        base_url = _api_base(kwargs.get("base_url", ""))
+        tab_type = kwargs.get("tab_type", "2")
+        offset = kwargs.get("offset", "0")
+
+        url = f"{base_url}/recommend/homepage?tab_type={tab_type}&offset={offset}"
+
+        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+            resp = await client.get(url)
+        resp.raise_for_status()
+        body = resp.json()
+
+        raw_list = body.get("data", {}).get("book_info", [])
+        book_list = [build_book_item(item) for item in raw_list if item.get("book_id")]
+        return ExploreResponse(bookList=book_list)
+
+
+@HandlerRegistry.register
+class MufanRankHandler(ExploreBaseHandler):
+    path = "/mufan/rank"
+    name = "mufan_rank"
+    methods = ["GET"]
+    query_params = ["base_url", "genre_tab", "algo_type", "offset", "limit"]
+    description = "mufan 排行榜"
+
+    async def handle(self, **kwargs: Any) -> ExploreResponse:
+        base_url = _api_base(kwargs.get("base_url", ""))
+        genre_tab = kwargs.get("genre_tab", "2")
+        algo_type = kwargs.get("algo_type", "101")
+        offset = kwargs.get("offset", "0")
+        limit = kwargs.get("limit", "10")
+
+        url = f"{base_url}/bookmall/cell/change?genre_tab={genre_tab}&algo_type={algo_type}&offset={offset}&limit={limit}"
+
+        async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True) as client:
+            resp = await client.get(url)
+        resp.raise_for_status()
+        body = resp.json()
+
+        raw_list = body.get("data", {}).get("book_info", [])
+        book_list = [build_book_item(item) for item in raw_list]
         return ExploreResponse(bookList=book_list)

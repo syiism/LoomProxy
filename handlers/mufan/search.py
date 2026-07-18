@@ -52,7 +52,26 @@ def extract_book_data(tabs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return items
 
 
+def _normalize_video_item(item: dict[str, Any]) -> None:
+    card_tips = item.get("card_tips", "")
+    if not item.get("rec_text") and card_tips:
+        parts = card_tips.split("·")
+        item["rec_text"] = parts[-1] if len(parts) > 1 else card_tips
+    if not item.get("sub_title"):
+        if card_tips:
+            parts = card_tips.split("·")
+            if len(parts) >= 3:
+                item["sub_title"] = "·".join(parts[:-1])
+            elif len(parts) == 2:
+                item["sub_title"] = parts[0]
+        else:
+            sil = item.get("secondary_info_list", [])
+            if sil:
+                item["sub_title"] = "·".join(s.get("content", "") for s in sil)
+
+
 def build_video_kind(item: dict[str, Any]) -> str:
+    _normalize_video_item(item)
     rec_text = item.get("rec_text", "")
     score = item.get("score", "") + "分"
     sub_title = item.get("sub_title", "").replace("·", ",")
@@ -78,7 +97,7 @@ def build_book_item(item: dict[str, Any]) -> BookItem:
         kind=build_video_kind(item),
         wordCount="",
         lastChapter="",
-        intro=item.get("video_detail", {}).get("series_intro", ""),
+        intro=item.get("video_detail", {}).get("series_intro", "") or item.get("video_desc", ""),
         coverUrl=item.get("cover", ""),
     )
 
