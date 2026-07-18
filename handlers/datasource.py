@@ -9,8 +9,7 @@ from base.base import BaseHandler, HandlerRegistry
 
 class DatasourcesResponse(BaseModel):
     names: list[str]
-    sources: dict[str, str]
-    fileSources: list[str]
+    sources: dict[str, list]
     fileNames: dict[str, list]
 
 
@@ -26,11 +25,10 @@ class DatasourceHandler(BaseHandler):
 
     async def handle(self, **kwargs: Any) -> DatasourcesResponse:
         sources =  {
-            "番茄（兔兔）": "tutu",
-            "番茄（沐凡）": "mufan"
+            "番茄（兔兔）": ["tutu", "fq"],
+            "番茄（沐凡）": ["mufan", "fq"]
         }
         names = ["番茄（兔兔）", "番茄（沐凡）"]
-        fileSources = ['fq']
         fileNames = {'fq': ['fq_moduleMap.json', 'fq_sytjs.json', 'fq_categorys.json']}
         
-        return DatasourcesResponse(names=names, sources=sources, fileSources=fileSources, fileNames=fileNames)
+        return DatasourcesResponse(names=names, sources=sources, fileNames=fileNames)
