@@ -153,6 +153,109 @@ handlers/ → base/ + utils/ (具体实现)
 | `manju` 漫剧 | `genre == "205"` 且有 `schedule_mode`（无 `album_book_order`） |
 | `xiaoshuo` 小说 | `is_ebook == "1"` 或 `genre == "0"` |
 
+## 添加数据源方法论
+
+以下步骤适用于添加任意新数据源，不依赖特定上游 API 风格。
+
+### 第一步：创建目录与注册入口
+
+```
+handlers/{source}/
+├── __init__.py          # from . import module1, module2, ...
+└── search.py            # (示例) 搜索 handler
+```
+
+`__init__.py` 必须显式 import 各模块以触发 `@HandlerRegistry.register`。无需修改 `handlers/__init__.py` 或 `app.py`。
+
+### 第二步：按接口类型选择基类
+
+| 接口语义 | 基类 | 返回模型 | 典型路径 |
+|----------|------|----------|----------|
+| 搜索 | `SearchBaseHandler` | `SearchResponse` | `/{source}/search` |
+| 详情 | `DetailBaseHandler` | `BookDetail` | `/{source}/detail` |
+| 章节 | `ChapterBaseHandler` | `ChapterResponse` | `/{source}/chapter` |
+| 内容 | `ContentBaseHandler` | `ContentResponse` | `/{source}/content` |
+| 探索/推荐/榜单 | `ExploreBaseHandler` | `ExploreResponse` | `/{source}/recommend` 等 |
+| 非标准接口 | `BaseHandler` | 自定 | 自定 |
+
+**原则**：一个 handler 只做一个接口，不合并多个语义到同一个类。
+
+### 第三步：实现 Handler
+
+```python
+@HandlerRegistry.register
+class XxxSearchHandler(SearchBaseHandler):
+    path = "/{source}/search"
+    name = "{source}_search"
+    methods = ["GET"]
+    query_params = ["base_url", "query", ...]
+    description = "..."
+    # 可选：response_model 默认继承基类，也可覆盖
+
+    async def handle(self, **kwargs: Any) -> SearchResponse:
+        base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
+        query = kwargs.get("query", "")
+        ...
+        return SearchResponse(bookList=[...])
+```
+
+**要点**：
+- `path` 以 `/{source}/` 开头，数据源间路径不冲突
+- `query_params` 声明所有接收的参数名，未声明的参数会被忽略
+- 内部使用 `kwargs.get(key, default)`，不抛 KeyError
+- `normalize_api_base(base_url, prefix)` 统一处理 API 前缀，prefix 参数对每个数据源可不同
+
+### 第四步：创建数据源工具模块
+
+当数据源有特定字段映射或解析逻辑时：
+
+```
+utils/{source}_utils.py    # 数据源专用工具
+utils/{source}_data/       # 可选：静态 JSON 数据
+```
+
+**判断标准**：
+- 逻辑只被一个数据源引用 → 放在 `handlers/{source}/` 模块内部
+- 逻辑可被同系列数据源复用 → 提取到 `utils/{source}_utils.py`
+- 逻辑完全不依赖数据源（时间、HTTP、通用提取） → 复用 `utils/fq_utils.py`
+
+### 第五步：注册到数据源列表
+
+修改 `handlers/datasource.py`，在 `handle` 方法中添加数据源信息和名称：
+
+```python
+resp = {
+    "...": "{source}",
+    ...
+}
+names = [...]
+return DatasourcesResponse(names=names, sources=resp)
+```
+
+### 第六步（可选）：添加静态数据
+
+在 `utils/` 下创建 `{source}_data/` 目录，放入 `{source}_*.json` 文件，`GET /data?source={source}` 自动发现。
+
+### 接口设计约定
+
+- **路径格式**：`/{source}/{action}`（如 `/tutu/search`、`/mufan/rank`）
+- **参数风格**：统一使用 query string 参数，不依赖 path 参数或 request body
+- **`base_url`**：每个 handler 的第一个参数，用户指定上游服务地址
+- **前缀处理**：不同数据源可能使用不同 API 前缀（如 `/api/v1` vs `/api`），通过 `normalize_api_base(base_url, prefix)` 的 `prefix` 参数区分
+
+### 辅助函数复用策略
+
+| 场景 | 推荐做法 |
+|------|----------|
+| 上游响应含嵌套 `book_data`/`video_data` | 复用 `extract_book_data` |
+| 构建 `BookItem`（书籍/视频混合） | 复用 `build_book_item` |
+| 拼接书籍 `kind` 字段 | 复用 `build_book_kind` |
+| 拼接视频 `kind` 字段 | 复用 `build_video_kind` |
+| 去除 Legado 搜索前缀 `+1/+3/+11/+19` | 复用 `strip_search_prefix` |
+| 视频字段归一化（`card_tips` → `rec_text`） | 复用 `normalize_video_item` |
+| 检测番茄系书籍类型 | 复用 `_detect_book_type` |
+| 需要自定义字段映射 | 在 `{source}_utils.py` 中自行实现 |
+
 ## 编码规范
 
 - **导入路径**：使用绝对导入（`from base.searchBase import ...` / `from utils.fq_utils import ...`）
