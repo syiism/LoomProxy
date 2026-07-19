@@ -12,7 +12,7 @@ from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, normalize_api_base
 
 def build_chapter_info(item: dict[str, Any]) -> str:
     volume = item.get("volume_name", "")
-    ts_str = item.get("first_pass_time", "")
+    ts_str = item.get("firstPassTime", "")
     if not ts_str:
         return volume
     try:
@@ -28,7 +28,7 @@ def build_chapter_info(item: dict[str, Any]) -> str:
 def build_chapter_item(item: dict[str, Any]) -> ChapterItem:
     return ChapterItem(
         title=item.get("title", ""),
-        itemId=item.get("item_id", ""),
+        itemId=item.get("itemId", ""),
         chapterInfo=build_chapter_info(item),
     )
 
@@ -57,7 +57,7 @@ class LuomuChapterHandler(ChapterBaseHandler):
         for volume in raw_list:
             if isinstance(volume, list):
                 for item in volume:
-                    if isinstance(item, dict) and item.get("item_id"):
+                    if isinstance(item, dict) and item.get("itemId"):
                         chapter_list.append(build_chapter_item(item))
 
         return ChapterResponse(chapterList=chapter_list, nextTocUrl=None)
