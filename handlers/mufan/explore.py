@@ -16,7 +16,7 @@ class MufanFrontHandler(ContentBaseHandler):
     name = "mufan_front"
     methods = ["GET"]
     query_params = ["base_url", "tab"]
-    description = "mufan 发现页分类"
+    description = "番茄（沐凡）发现页分类"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""))
@@ -39,7 +39,7 @@ class MufanLandingHandler(ExploreBaseHandler):
         "base_url", "category_id", "offset",
         "genre_type", "gender", "word_number", "book_status", "sort_by",
     ]
-    description = "mufan 分类落地页书籍列表"
+    description = "番茄（沐凡）分类落地页书籍列表"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""))
@@ -66,7 +66,7 @@ class MufanRecommendHandler(ExploreBaseHandler):
     name = "mufan_recommend"
     methods = ["GET"]
     query_params = ["base_url", "tab_type", "offset"]
-    description = "mufan 首页推荐"
+    description = "番茄（沐凡）首页推荐"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""))
@@ -91,7 +91,7 @@ class MufanRankHandler(ExploreBaseHandler):
     name = "mufan_rank"
     methods = ["GET"]
     query_params = ["base_url", "genre_tab", "algo_type", "offset", "limit"]
-    description = "mufan 排行榜"
+    description = "番茄（沐凡）排行榜"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""))

@@ -15,7 +15,7 @@ class TutuRecommendHandler(ExploreBaseHandler):
     name = "tutu_recommend"
     methods = ["GET"]
     query_params = ["base_url", "tab_type", "offset"]
-    description = "tutu 首页推荐"
+    description = "番茄（兔兔）首页推荐"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
@@ -40,7 +40,7 @@ class TutuRankHandler(ExploreBaseHandler):
     name = "tutu_rank"
     methods = ["GET"]
     query_params = ["base_url", "book_id", "offset", "genre_tab", "rank_sub_info_id", "algo_type"]
-    description = "tutu 排行榜"
+    description = "番茄（兔兔）排行榜"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
@@ -73,7 +73,7 @@ class TutuRelatedHandler(ExploreBaseHandler):
     name = "tutu_related"
     methods = ["GET"]
     query_params = ["base_url", "book_id"]
-    description = "tutu 相关作品"
+    description = "番茄（兔兔）相关作品"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
@@ -97,7 +97,7 @@ class TutuAuthorHandler(ExploreBaseHandler):
     name = "tutu_author"
     methods = ["GET"]
     query_params = ["base_url", "author_id"]
-    description = "tutu 作者作品"
+    description = "番茄（兔兔）作者作品"
 
     async def handle(self, **kwargs: Any) -> ExploreResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")

@@ -39,7 +39,7 @@ class MufanChapterHandler(ChapterBaseHandler):
     name = "mufan_chapter"
     methods = ["GET"]
     query_params = ["base_url", "book_id"]
-    description = "mufan 章节"
+    description = "番茄（沐凡）章节"
 
     async def handle(self, **kwargs: Any) -> ChapterResponse:
         base_url = kwargs.get("base_url", "").rstrip("/")

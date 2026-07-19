@@ -77,7 +77,7 @@ class MufanContentHandler(ContentBaseHandler):
     name = "mufan_content"
     methods = ["GET"]
     query_params = ["base_url", "book_id", "item_id", "tone_id", "quality"]
-    description = "mufan 统一内容（自动识别类型分发：小说/听书/漫画/短剧/漫剧）"
+    description = "番茄（沐凡）统一内容（自动识别类型分发：小说/听书/漫画/短剧/漫剧）"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
         base_url = kwargs.get("base_url", "").rstrip("/")

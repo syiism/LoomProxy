@@ -127,7 +127,7 @@ class TutuContentHandler(ContentBaseHandler):
     name = "tutu_content"
     methods = ["GET"]
     query_params = ["base_url", "book_id", "item_id", "tone_id", "quality"]
-    description = "tutu 统一内容（自动识别类型分发：小说/听书/漫画/短剧/漫剧）"
+    description = "番茄（兔兔）统一内容（自动识别类型分发：小说/听书/漫画/短剧/漫剧）"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")

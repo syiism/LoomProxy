@@ -32,7 +32,7 @@ class MufanSearchHandler(SearchBaseHandler):
     name = "mufan_search"
     methods = ["GET"]
     query_params = ["base_url", "query", "offset", "count", "tab_type", "search_type"]
-    description = "mufan 搜索"
+    description = "番茄（沐凡）搜索"
 
     async def handle(self, **kwargs: Any) -> SearchResponse:
         base_url = kwargs.get("base_url", "").rstrip("/")

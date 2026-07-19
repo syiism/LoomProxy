@@ -54,7 +54,7 @@ class MufanDetailHandler(DetailBaseHandler):
     name = "mufan_detail"
     methods = ["GET"]
     query_params = ["base_url", "book_id"]
-    description = "mufan 详情"
+    description = "番茄（沐凡）详情"
 
     async def handle(self, **kwargs: Any) -> BookDetail:
         base_url = kwargs.get("base_url", "").rstrip("/")

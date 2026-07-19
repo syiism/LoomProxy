@@ -78,7 +78,7 @@ class TutuDetailHandler(DetailBaseHandler):
     name = "tutu_detail"
     methods = ["GET"]
     query_params = ["base_url", "book_id"]
-    description = "tutu 详情"
+    description = "番茄（兔兔）详情"
 
     async def handle(self, **kwargs: Any) -> BookDetail:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
