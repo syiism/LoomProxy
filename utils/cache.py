@@ -5,8 +5,10 @@ from collections import OrderedDict
 from functools import wraps
 from typing import Any, Callable
 
+from confMagr import ConfMagr
 
-def cached(ttl: int = 300, maxsize: int = 128):
+
+def cached(ttl: int = ConfMagr.CACHE_TTL, maxsize: int = ConfMagr.CACHE_MAXSIZE):
     cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
 
     def decorator(func: Callable) -> Callable:

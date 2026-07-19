@@ -5,8 +5,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from base.searchBase import BookItem
+from confMagr import ConfMagr
 
-TZ_SHANGHAI = timezone(timedelta(hours=8))
+TZ_SHANGHAI = timezone(timedelta(hours=ConfMagr.TZ_OFFSET_HOURS))
 
 GENDER_MAP = {"0": "女生", "1": "男生", "2": "出版"}
 CREATION_STATUS_MAP = {"0": "完结", "1": "连载", "4": "断更", "-1": "未知"}

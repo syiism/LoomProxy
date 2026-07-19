@@ -17,6 +17,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, create_model, field_validator
 
+from confMagr import ConfMagr
 from handlers import BaseHandler, get_all_handlers
 from utils.network import is_safe_url
 
@@ -163,7 +164,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         logger.warning("上游 HTTP %s: %s", exc.response.status_code, exc.request.url)
         return JSONResponse(
             status_code=502,
-            content={"code": -1, "msg": f"上游返回异常状态码 {exc.response.status_code}"},
+            content={"code": ConfMagr.ERROR_CODE, "msg": f"上游返回异常状态码 {exc.response.status_code}"},
         )
 
     @fastapi_app.exception_handler(httpx.TimeoutException)
@@ -171,7 +172,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         logger.warning("上游请求超时: %s", exc.request.url if exc.request else "")
         return JSONResponse(
             status_code=504,
-            content={"code": -1, "msg": "上游请求超时"},
+            content={"code": ConfMagr.ERROR_CODE, "msg": "上游请求超时"},
         )
 
     @fastapi_app.exception_handler(httpx.HTTPError)
@@ -179,7 +180,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         logger.warning("上游请求异常: %s", exc)
         return JSONResponse(
             status_code=502,
-            content={"code": -1, "msg": "上游数据异常"},
+            content={"code": ConfMagr.ERROR_CODE, "msg": "上游数据异常"},
         )
 
     @fastapi_app.exception_handler(ValueError)
@@ -187,7 +188,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         logger.warning("参数校验失败: %s", exc)
         return JSONResponse(
             status_code=400,
-            content={"code": -1, "msg": str(exc)},
+            content={"code": ConfMagr.ERROR_CODE, "msg": str(exc)},
         )
 
     @fastapi_app.exception_handler(KeyError)
@@ -195,7 +196,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         logger.warning("数据解析缺少字段: %s", exc)
         return JSONResponse(
             status_code=500,
-            content={"code": -1, "msg": f"数据解析异常：缺少字段 {exc}"},
+            content={"code": ConfMagr.ERROR_CODE, "msg": f"数据解析异常：缺少字段 {exc}"},
         )
 
     @fastapi_app.exception_handler(Exception)
@@ -203,7 +204,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         logger.error("未捕获异常", exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"code": -1, "msg": "内部服务异常"},
+            content={"code": ConfMagr.ERROR_CODE, "msg": "内部服务异常"},
         )
 
 
@@ -230,4 +231,4 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8081, log_level="info")
+    uvicorn.run(app, host=ConfMagr.SERVER_HOST, port=ConfMagr.SERVER_PORT, log_level=ConfMagr.SERVER_LOG_LEVEL)

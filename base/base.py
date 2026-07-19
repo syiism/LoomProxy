@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 
 import httpx
 
-DEFAULT_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+from confMagr import ConfMagr
 
 
 class HandlerRegistry:
@@ -50,7 +50,7 @@ class BaseHandler(ABC):
         method: str = "GET",
         **kwargs: Any,
     ) -> httpx.Response:
-        timeout = kwargs.pop("timeout", DEFAULT_TIMEOUT)
+        timeout = kwargs.pop("timeout", httpx.Timeout(ConfMagr.TIMEOUT_POOL, connect=ConfMagr.TIMEOUT_CONNECT))
         follow_redirects = kwargs.pop("follow_redirects", True)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=follow_redirects) as client:
             return await client.request(method, url, **kwargs)

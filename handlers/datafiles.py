@@ -8,9 +8,10 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from base.base import HandlerRegistry, BaseHandler
+from confMagr import ConfMagr
 from utils.cache import cached
 
-_UTILS_DIR = Path(__file__).resolve().parent.parent / "utils"
+_UTILS_DIR = Path(__file__).resolve().parent.parent / ConfMagr.UTILS_DIRNAME
 
 
 class FileInfo(BaseModel):
@@ -57,8 +58,8 @@ def _data_dir(source: str) -> Path:
 def _list_sources() -> list[str]:
     sources: list[str] = []
     for p in _UTILS_DIR.iterdir():
-        if p.is_dir() and p.name.endswith("_data"):
-            sources.append(p.name.removesuffix("_data"))
+        if p.is_dir() and p.name.endswith(ConfMagr.DATA_DIR_SUFFIX):
+            sources.append(p.name.removesuffix(ConfMagr.DATA_DIR_SUFFIX))
     return sorted(sources)
 
 
@@ -83,7 +84,7 @@ def _list_files(source: str) -> list[FileInfo]:
     d = _data_dir(source)
     if not d.is_dir():
         return []
-    return [_file_info(p) for p in sorted(d.glob(f"{source}_*.json"))]
+    return [_file_info(p) for p in sorted(d.glob(ConfMagr.DATA_FILE_GLOB.format(source=source)))]
 
 
 def _load_json(source: str, name: str) -> Any:
