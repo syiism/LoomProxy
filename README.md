@@ -37,6 +37,8 @@ uv run python app.py
 ├── utils/                    # 共享工具
 │   ├── __init__.py
 │   ├── fq_utils.py           # 番茄系通用工具函数
+│   ├── network.py            # SSRF 防御 (is_safe_url)
+│   ├── cache.py              # 内存 LRU 缓存 (@cached)
 │   └── fq_data/              # 番茄系静态 JSON 数据
 │       ├── fq_categorys.json
 │       ├── fq_moduleMap.json
@@ -84,6 +86,27 @@ handlers/ → base/ + utils/ (具体实现)
 |------|------|------|
 | `HandlerRegistry` | `base/base.py` | 全局路由注册表，支持有参/无参装饰器 |
 | `BaseHandler` | `base/base.py` | 抽象基类，定义 `path`/`name`/`methods`/`query_params`/`description`/`handle` |
+| `is_safe_url` | `utils/network.py` | SSRF 防御，校验 base_url 安全 |
+| `@cached` | `utils/cache.py` | 内存 LRU 缓存装饰器 |
+
+### 安全：SSRF 防御
+
+所有 `base_url` 参数自动通过 `is_safe_url` 校验，仅允许公网 `http://`/`https://`，禁止私有 IP 和回环地址。
+
+### 统一异常处理
+
+| 异常 | HTTP 状态码 | 响应体 |
+|------|------------|--------|
+| `httpx.HTTPStatusError` | 502 | `{"code": -1, "msg": "上游返回异常状态码 {code}"}` |
+| `httpx.TimeoutException` | 504 | `{"code": -1, "msg": "上游请求超时"}` |
+| `httpx.HTTPError` | 502 | `{"code": -1, "msg": "上游数据异常"}` |
+| `ValueError`（含 SSRF） | 400 | `{"code": -1, "msg": "..."}` |
+| `KeyError` | 500 | `{"code": -1, "msg": "数据解析异常：缺少字段 {key}"}` |
+| `Exception`（兜底） | 500 | `{"code": -1, "msg": "内部服务异常"}` |
+
+### 缓存
+
+`utils/cache.py` 提供 `@cached(ttl=300, maxsize=128)` 装饰器，当前应用于 `/datasources` 和 `/data` 端点。
 
 ## 新增数据源步骤
 
@@ -114,6 +137,8 @@ handlers/ → base/ + utils/ (具体实现)
 - **导入路径**：使用绝对导入（`from base.searchBase import ...` / `from utils.fq_utils import ...`）
 - **`**kwargs`**：使用 `kwargs.get("key", default)` 而非 `kwargs["key"]` 或 `.pop()`
 - **时间处理**：时间戳统一 UTC+8，使用 `TZ_SHANGHAI` 常量
-- **异步 HTTP**：使用 `httpx.AsyncClient`，设 `DEFAULT_TIMEOUT`
+- **异步 HTTP**：使用 `httpx.AsyncClient`，设 `DEFAULT_TIMEOUT`；可调用 `self.fetch(client, url)` 替代裸 `client.get()`，便于测试 mock
 - **响应模型**：`handle` 返回 Pydantic `BaseModel` 实例，`app.py` 自动 `model_dump()`
 - **`normalize_api_base`**：统一使用 `normalize_api_base(base_url, prefix)` 拼接 API 基础路径
+- **缓存**：静态数据（数据源列表、JSON 文件）使用 `@cached(ttl=300)` 装饰器减少重复计算
+- **SSRF**：用户提供的 `base_url` 在入口处自动通过 `is_safe_url` 校验，禁止内网/回环地址

@@ -28,8 +28,10 @@ handlers/ → base/ + utils/ (具体实现)
 | 组件 | 路径 | 说明 |
 |------|------|------|
 | `HandlerRegistry` | `base/base.py:13` | 全局路由注册表，支持有参/无参装饰器 |
-| `BaseHandler` | `base/base.py:44` | 抽象基类，定义 `path`/`name`/`methods`/`query_params`/`description`/`handle` |
-| `app.py` | `app.py:23` | `_make_endpoint` 动态生成路由闭包，`register_handlers` 批量注册 |
+| `BaseHandler` | `base/base.py:44` | 抽象基类，定义 `path`/`name`/`methods`/`query_params`/`description`/`handle`/`fetch` |
+| `app.py` | `app.py:91` | `_make_endpoint` 动态生成路由闭包 + Pydantic 查询模型 + SSRF 校验 + 启动验证 |
+| `network.py` | `utils/network.py` | SSRF 防御 `is_safe_url` |
+| `cache.py` | `utils/cache.py` | 内存 LRU 缓存装饰器 `@cached(ttl, maxsize)` |
 
 ### 响应模型
 
@@ -59,8 +61,37 @@ handlers/ → base/ + utils/ (具体实现)
 
 | 端点 | 路径 | 说明 |
 |------|------|------|
-| 数据源列表 | `GET /datasources` | 返回所有可用数据源名称 |
-| 静态数据 | `GET /data` | 返回静态 JSON 数据文件（`?source=fq&name=fq_moduleMap`） |
+| 数据源列表 | `GET /datasources` | 返回所有可用数据源名称（@cached 300s） |
+| 静态数据 | `GET /data` | 返回静态 JSON 数据文件（`?source=fq&name=fq_moduleMap`）（@cached 300s） |
+
+### 安全：SSRF 防御
+
+`app.py` 在 `_make_endpoint` 生成的端点中自动调用 `_validate_base_url`，对每个 `base_url` 参数执行 `is_safe_url` 校验：
+
+- 仅允许 `http://` / `https://`
+- 禁止私有 IP（`10.x`、`172.16-31.x`、`192.168.x`、`127.x`、`169.254.x`）
+- 禁止回环域名（`localhost`、`127.0.0.1`、`::1`）
+
+### 统一异常处理
+
+`app.py` 中 `_register_exception_handlers` 注册 5 个全局 `@exception_handler`：
+
+| 异常 | HTTP 状态码 | 响应体 |
+|------|------------|--------|
+| `httpx.HTTPStatusError` | 502 | `{"code": -1, "msg": "上游返回异常状态码 {code}"}` |
+| `httpx.TimeoutException` | 504 | `{"code": -1, "msg": "上游请求超时"}` |
+| `httpx.HTTPError` | 502 | `{"code": -1, "msg": "上游数据异常"}` |
+| `ValueError`（含 SSRF） | 400 | `{"code": -1, "msg": "..."}` |
+| `KeyError` | 500 | `{"code": -1, "msg": "数据解析异常：缺少字段 {key}"}` |
+| `Exception`（兜底） | 500 | `{"code": -1, "msg": "内部服务异常"}` |
+
+### 缓存
+
+`utils/cache.py` 提供 `@cached(ttl=300, maxsize=128)` 装饰器，基于 `OrderedDict` 的 LRU 实现。
+
+当前已应用：
+- `handlers/datasource.py` 的 `handle` 方法（TTL 300s）
+- `handlers/datafiles.py` 的 `handle` 方法（TTL 300s）
 
 ## 项目结构
 
@@ -78,6 +109,8 @@ handlers/ → base/ + utils/ (具体实现)
 ├── utils/                    # 共享工具
 │   ├── __init__.py
 │   ├── fq_utils.py           # 番茄系通用工具函数
+│   ├── network.py            # SSRF 防御 (is_safe_url)
+│   ├── cache.py              # 内存 LRU 缓存 (@cached)
 │   └── fq_data/              # 番茄系静态 JSON 数据
 │       ├── fq_categorys.json
 │       ├── fq_moduleMap.json
@@ -96,6 +129,7 @@ handlers/ → base/ + utils/ (具体实现)
 │   └── sq_luomu/             # 书旗（落幕）
 ├── tests/
 │   ├── conftest.py
+│   ├── test_handlers.py      # 集成测试（SSRF、缓存、健康检查、fetch mock 示范）
 │   └── test_content.py
 └── AGENTS.md
 ```
@@ -330,7 +364,9 @@ return DatasourcesResponse(names=names, sources=resp)
 - **导入路径**：使用绝对导入（`from base.searchBase import ...` / `from utils.fq_utils import ...`）
 - **`**kwargs`**：使用 `kwargs.get("key", default)` 而非 `kwargs["key"]` 或 `.pop()`
 - **时间处理**：时间戳统一 UTC+8，使用 `TZ_SHANGHAI` 常量
-- **异步 HTTP**：使用 `httpx.AsyncClient`，设 `DEFAULT_TIMEOUT`
+- **异步 HTTP**：使用 `httpx.AsyncClient`，设 `DEFAULT_TIMEOUT`；可调用 `self.fetch(client, url)` 替代裸 `client.get()`，便于测试 mock
 - **响应模型**：`handle` 返回 Pydantic `BaseModel` 实例，`app.py` 自动 `model_dump()`
 - **`normalize_api_base`**：统一使用 `normalize_api_base(base_url, prefix)` 拼接 API 基础路径，而非手动 `rstrip`/`endswith`
 - **URL 拼接**：`url = f"{base_url.rstrip('/')}/path?param={value}"`
+- **缓存**：静态数据（数据源列表、JSON 文件）使用 `@cached(ttl=300)` 装饰器减少重复计算
+- **SSRF**：用户提供的 `base_url` 在入口处自动通过 `is_safe_url` 校验，禁止内网/回环地址
