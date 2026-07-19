@@ -25,7 +25,7 @@ class LuomuSearchHandler(SearchBaseHandler):
     name = "luomu_search"
     methods = ["GET"]
     query_params = ["base_url", "query", "page", "tab_type"]
-    description = "luomu 搜索（tab_type 数字映射中文 tab）"
+    description = "番茄（落幕）搜索（tab_type 数字映射中文 tab）"
 
     async def handle(self, **kwargs: Any) -> SearchResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api")

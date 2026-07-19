@@ -53,7 +53,7 @@ class LuomuDetailHandler(DetailBaseHandler):
     name = "luomu_detail"
     methods = ["GET"]
     query_params = ["base_url", "book_id", "tab"]
-    description = "luomu 详情"
+    description = "番茄（落幕）详情"
 
     async def handle(self, **kwargs: Any) -> BookDetail:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api")

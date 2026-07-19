@@ -67,7 +67,7 @@ class LuomuContentHandler(ContentBaseHandler):
     name = "luomu_content"
     methods = ["GET"]
     query_params = ["base_url", "book_id", "item_id", "tone_id", "quality"]
-    description = "luomu 统一内容（自动识别类型分发：小说/漫画/听书/短剧/漫剧，source=番茄 硬编码）"
+    description = "番茄（落幕）统一内容（自动识别类型分发：小说/漫画/听书/短剧/漫剧，source=番茄 硬编码）"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api")
