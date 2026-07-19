@@ -20,12 +20,15 @@ uv run python app.py
 - httpx >= 0.28.1
 - pydantic >= 2.13.4
 - uvicorn >= 0.51.0
+- python-dotenv >= 1.0.0
 
 ## 项目结构
 
 ```
 .
 ├── app.py                    # 应用入口，自动注册路由
+├── confMagr.py               # 集中配置管理（支持 .env 覆盖）
+├── .env.example              # 环境变量模板
 ├── base/                     # 抽象层（纯 Pydantic 模型 + 基类）
 │   ├── __init__.py
 │   ├── base.py               # HandlerRegistry, BaseHandler
@@ -88,6 +91,7 @@ handlers/ → base/ + utils/ (具体实现)
 | `BaseHandler` | `base/base.py` | 抽象基类，定义 `path`/`name`/`methods`/`query_params`/`description`/`handle` |
 | `is_safe_url` | `utils/network.py` | SSRF 防御，校验 base_url 安全 |
 | `@cached` | `utils/cache.py` | 内存 LRU 缓存装饰器 |
+| `ConfMagr` | `confMagr.py` | 集中配置管理，支持 `.env` 覆盖 |
 
 ### 安全：SSRF 防御
 
@@ -107,6 +111,19 @@ handlers/ → base/ + utils/ (具体实现)
 ### 缓存
 
 `utils/cache.py` 提供 `@cached(ttl=300, maxsize=128)` 装饰器，当前应用于 `/datasources` 和 `/data` 端点。
+
+### 配置管理
+
+`confMagr.py` 集中管理所有公共配置，通过 `python-dotenv` 加载 `.env` 文件覆盖默认值：
+
+```bash
+# .env 示例
+TIMEOUT_CONNECT=5.0
+TIMEOUT_POOL=10.0
+SERVER_PORT=9090
+```
+
+`.env` 文件已被 `.gitignore` 忽略，参考格式见 `.env.example`。
 
 ## 新增数据源步骤
 
@@ -137,8 +154,9 @@ handlers/ → base/ + utils/ (具体实现)
 - **导入路径**：使用绝对导入（`from base.searchBase import ...` / `from utils.fq_utils import ...`）
 - **`**kwargs`**：使用 `kwargs.get("key", default)` 而非 `kwargs["key"]` 或 `.pop()`
 - **时间处理**：时间戳统一 UTC+8，使用 `TZ_SHANGHAI` 常量
-- **异步 HTTP**：使用 `httpx.AsyncClient`，设 `DEFAULT_TIMEOUT`；可调用 `self.fetch(client, url)` 替代裸 `client.get()`，便于测试 mock
+- **异步 HTTP**：使用 `httpx.AsyncClient`，设 `ConfMagr.default_timeout()`；调用 `self.fetch(url)` 替代裸 `client.get()`，便于测试 mock
 - **响应模型**：`handle` 返回 Pydantic `BaseModel` 实例，`app.py` 自动 `model_dump()`
 - **`normalize_api_base`**：统一使用 `normalize_api_base(base_url, prefix)` 拼接 API 基础路径
 - **缓存**：静态数据（数据源列表、JSON 文件）使用 `@cached(ttl=300)` 装饰器减少重复计算
 - **SSRF**：用户提供的 `base_url` 在入口处自动通过 `is_safe_url` 校验，禁止内网/回环地址
+- **配置**：全局配置通过 `confMagr.py` 集中管理，`.env` 文件可覆盖默认值
