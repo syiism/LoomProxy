@@ -9,6 +9,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
+import httpx
+
 
 class HandlerRegistry:
     _items: ClassVar[dict[str, type["BaseHandler"]]] = {}
@@ -39,6 +41,15 @@ class BaseHandler(ABC):
     methods: list[str] = ["GET"]
     query_params: list[str] = []
     description: str = ""
+
+    async def fetch(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        method: str = "GET",
+        **kwargs: Any,
+    ) -> httpx.Response:
+        return await client.request(method, url, **kwargs)
 
     @abstractmethod
     async def handle(self, **kwargs: Any) -> dict[str, Any]:

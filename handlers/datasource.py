@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from base.base import BaseHandler, HandlerRegistry
+from utils.cache import cached
 
 
 class DatasourcesResponse(BaseModel):
@@ -23,6 +24,7 @@ class DatasourceHandler(BaseHandler):
 
     response_model = DatasourcesResponse
 
+    @cached(ttl=300)
     async def handle(self, **kwargs: Any) -> DatasourcesResponse:
         sources =  {
             "番茄（兔兔）": ["tutu", "fq"],

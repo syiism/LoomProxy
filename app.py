@@ -9,14 +9,83 @@
 
 from __future__ import annotations
 
-import inspect
+import logging
 from typing import Any
 
-from fastapi import FastAPI, Query, Request
+import httpx
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model, field_validator
 
 from handlers import BaseHandler, get_all_handlers
+from utils.network import is_safe_url
+
+logger = logging.getLogger("api-proxy")
+
+# ------ 已知数据源的预期路由（按数据源+动作）------
+EXPECTED_ROUTES: dict[str, list[str]] = {
+    "tutu": ["search", "detail", "chapter", "content", "recommend", "rank", "related", "author"],
+    "mufan": ["search", "detail", "chapter", "content", "front", "landing", "recommend", "rank"],
+    "fq_xinghai": ["search", "detail", "chapter", "content", "recommend", "rank"],
+    "luomu": ["search", "detail", "chapter", "content"],
+    "jingluo": ["search", "detail", "chapter", "content"],
+    "qq_luomu": ["search", "detail", "chapter", "content"],
+    "qm_luomu": ["search", "detail", "chapter", "content"],
+    "sq_luomu": ["search", "detail", "chapter", "content"],
+}
+
+
+# ------ Pydantic 查询模型工厂 ------
+_PARAM_FIELD_DEFS: dict[str, tuple[type, Any]] = {
+    "base_url": (str, ""),
+    "query": (str, ""),
+    "offset": (str, ""),
+    "count": (str, ""),
+    "book_id": (str, ""),
+    "item_id": (str, ""),
+    "tone_id": (str, ""),
+    "quality": (str, ""),
+    "tab_type": (str, ""),
+    "search_type": (str, ""),
+    "tab": (str, ""),
+    "category_id": (str, ""),
+    "genre_type": (str, ""),
+    "gender": (str, ""),
+    "word_number": (str, ""),
+    "book_status": (str, ""),
+    "sort_by": (str, ""),
+    "genre_tab": (str, ""),
+    "algo_type": (str, ""),
+    "limit": (str, ""),
+    "author_id": (str, ""),
+    "rank_sub_info_id": (str, ""),
+    "name": (str, ""),
+    "source": (str, ""),
+}
+
+
+def _make_query_model(params: list[str]) -> type[BaseModel]:
+    fields: dict[str, tuple[type, Any]] = {}
+    for p in params:
+        if p in _PARAM_FIELD_DEFS:
+            fields[p] = _PARAM_FIELD_DEFS[p]
+        else:
+            fields[p] = (str, "")
+    return create_model("DynamicQuery", **fields)
+
+
+# ------ 路由注册验证 ------
+def _validate_routes(registered: list[dict[str, Any]]) -> None:
+    registered_paths = {r["path"] for r in registered}
+    for source, actions in EXPECTED_ROUTES.items():
+        for action in actions:
+            expected = f"/{source}/{action}"
+            if expected not in registered_paths:
+                logger.critical(
+                    "预期路由 %s 未注册（数据源 %s 的 %s 接口缺失）",
+                    expected, source, action,
+                )
+                raise RuntimeError(f"数据源 {source} 的 {action} 接口缺失，请检查 handler 注册")
 
 
 # ------- 对修改关闭/对扩展开放 -------
@@ -26,31 +95,22 @@ def _make_endpoint(handler_cls: type[BaseHandler]) -> dict[str, Any]:
     methods: list[str] = list(instance.methods or ["GET"])
     params: list[str] = list(instance.query_params or [])
 
-    async def endpoint(request: Request, **kwargs: Any) -> JSONResponse:
-        all_kwargs = dict(request.query_params)
-        body = await instance.handle(**all_kwargs)
-        if isinstance(body, BaseModel):
-            body = body.model_dump()
-        return JSONResponse(body)
+    query_model = _make_query_model(params) if params else None
 
-    sig_params = []
-    for name in params:
-        sig_params.append(
-            inspect.Parameter(
-                name,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=Query(None, description=f"Query parameter: {name}"),
-            )
-        )
-    sig_params.append(
-        inspect.Parameter(
-            "request",
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            default=...,
-            annotation=Request,
-        )
-    )
-    endpoint.__signature__ = inspect.Signature(parameters=sig_params)
+    if query_model:
+        async def endpoint(query: BaseModel = Depends(query_model)) -> JSONResponse:
+            all_kwargs = query.model_dump()
+            _validate_base_url(all_kwargs)
+            body = await instance.handle(**all_kwargs)
+            if isinstance(body, BaseModel):
+                body = body.model_dump()
+            return JSONResponse(body)
+    else:
+        async def endpoint() -> JSONResponse:
+            body = await instance.handle()
+            if isinstance(body, BaseModel):
+                body = body.model_dump()
+            return JSONResponse(body)
 
     return {
         "path": instance.path,
@@ -63,6 +123,12 @@ def _make_endpoint(handler_cls: type[BaseHandler]) -> dict[str, Any]:
         "handler": handler_cls.__name__,
         "response_model": getattr(instance, "response_model", None),
     }
+
+
+def _validate_base_url(kwargs: dict[str, Any]) -> None:
+    base_url = kwargs.get("base_url")
+    if base_url and not is_safe_url(base_url):
+        raise ValueError(f"不安全的 base_url: {base_url}")
 
 
 # ------- 注册 -------
@@ -89,10 +155,63 @@ def register_handlers(fastapi_app: FastAPI) -> list[dict[str, Any]]:
     return registered
 
 
+# ------ 统一异常处理 ------
+def _register_exception_handlers(fastapi_app: FastAPI) -> None:
+    @fastapi_app.exception_handler(httpx.HTTPStatusError)
+    async def httpx_status_error_handler(request: Request, exc: httpx.HTTPStatusError) -> JSONResponse:
+        logger.warning("上游 HTTP %s: %s", exc.response.status_code, exc.request.url)
+        return JSONResponse(
+            status_code=502,
+            content={"code": -1, "msg": f"上游返回异常状态码 {exc.response.status_code}"},
+        )
+
+    @fastapi_app.exception_handler(httpx.TimeoutException)
+    async def httpx_timeout_handler(request: Request, exc: httpx.TimeoutException) -> JSONResponse:
+        logger.warning("上游请求超时: %s", exc.request.url if exc.request else "")
+        return JSONResponse(
+            status_code=504,
+            content={"code": -1, "msg": "上游请求超时"},
+        )
+
+    @fastapi_app.exception_handler(httpx.HTTPError)
+    async def httpx_error_handler(request: Request, exc: httpx.HTTPError) -> JSONResponse:
+        logger.warning("上游请求异常: %s", exc)
+        return JSONResponse(
+            status_code=502,
+            content={"code": -1, "msg": "上游数据异常"},
+        )
+
+    @fastapi_app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
+        logger.warning("参数校验失败: %s", exc)
+        return JSONResponse(
+            status_code=400,
+            content={"code": -1, "msg": str(exc)},
+        )
+
+    @fastapi_app.exception_handler(KeyError)
+    async def key_error_handler(request: Request, exc: KeyError) -> JSONResponse:
+        logger.warning("数据解析缺少字段: %s", exc)
+        return JSONResponse(
+            status_code=500,
+            content={"code": -1, "msg": f"数据解析异常：缺少字段 {exc}"},
+        )
+
+    @fastapi_app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error("未捕获异常", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"code": -1, "msg": "内部服务异常"},
+        )
+
+
 # ------ 组装 ------
 def create_app() -> FastAPI:
     fastapi_app = FastAPI(title="api-proxy")
+    _register_exception_handlers(fastapi_app)
     registered_routes = register_handlers(fastapi_app)
+    _validate_routes(registered_routes)
 
     @fastapi_app.get("/", include_in_schema=True, tags=["health"])
     async def root_health() -> dict[str, Any]:

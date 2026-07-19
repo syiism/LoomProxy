@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from base.base import HandlerRegistry, BaseHandler
+from utils.cache import cached
 
 _UTILS_DIR = Path(__file__).resolve().parent.parent / "utils"
 
@@ -102,6 +103,7 @@ class DataFilesHandler(BaseHandler):
     description = "静态数据文件。source 指定数据源（如 fq），name 指定文件名（不含后缀）；缺省时列出可用数据源或文件"
     response_model = SourcesResponse | FileListResponse | FileContentResponse | ErrorResponse
 
+    @cached(ttl=300)
     async def handle(self, **kwargs: Any) -> SourcesResponse | FileListResponse | FileContentResponse | ErrorResponse:
         source = kwargs.get("source", "")
         name = kwargs.get("name", "")
