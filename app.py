@@ -37,30 +37,31 @@ EXPECTED_ROUTES: dict[str, list[str]] = {
 
 # ------ Pydantic 查询模型工厂 ------
 _PARAM_FIELD_DEFS: dict[str, tuple[type, Any]] = {
-    "base_url": (str, ""),
-    "query": (str, ""),
-    "offset": (str, ""),
-    "count": (str, ""),
-    "book_id": (str, ""),
-    "item_id": (str, ""),
-    "tone_id": (str, ""),
-    "quality": (str, ""),
-    "tab_type": (str, ""),
-    "search_type": (str, ""),
-    "tab": (str, ""),
-    "category_id": (str, ""),
-    "genre_type": (str, ""),
-    "gender": (str, ""),
-    "word_number": (str, ""),
-    "book_status": (str, ""),
-    "sort_by": (str, ""),
-    "genre_tab": (str, ""),
-    "algo_type": (str, ""),
-    "limit": (str, ""),
-    "author_id": (str, ""),
-    "rank_sub_info_id": (str, ""),
-    "name": (str, ""),
-    "source": (str, ""),
+    "base_url": (str | None, None),
+    "query": (str | None, None),
+    "offset": (str | None, None),
+    "count": (str | None, None),
+    "book_id": (str | None, None),
+    "item_id": (str | None, None),
+    "tone_id": (str | None, None),
+    "quality": (str | None, None),
+    "tab_type": (str | None, None),
+    "search_type": (str | None, None),
+    "tab": (str | None, None),
+    "category_id": (str | None, None),
+    "genre_type": (str | None, None),
+    "gender": (str | None, None),
+    "word_number": (str | None, None),
+    "book_status": (str | None, None),
+    "sort_by": (str | None, None),
+    "genre_tab": (str | None, None),
+    "algo_type": (str | None, None),
+    "limit": (str | None, None),
+    "author_id": (str | None, None),
+    "rank_sub_info_id": (str | None, None),
+    "page": (str | None, None),
+    "name": (str | None, None),
+    "source": (str | None, None),
 }
 
 
@@ -70,7 +71,7 @@ def _make_query_model(params: list[str]) -> type[BaseModel]:
         if p in _PARAM_FIELD_DEFS:
             fields[p] = _PARAM_FIELD_DEFS[p]
         else:
-            fields[p] = (str, "")
+            fields[p] = (str | None, None)
     return create_model("DynamicQuery", **fields)
 
 
@@ -99,7 +100,7 @@ def _make_endpoint(handler_cls: type[BaseHandler]) -> dict[str, Any]:
 
     if query_model:
         async def endpoint(query: BaseModel = Depends(query_model)) -> JSONResponse:
-            all_kwargs = query.model_dump()
+            all_kwargs = {k: v for k, v in query.model_dump().items() if v is not None}
             _validate_base_url(all_kwargs)
             body = await instance.handle(**all_kwargs)
             if isinstance(body, BaseModel):
