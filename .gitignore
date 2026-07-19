@@ -5,3 +5,4 @@ __pycache__/
 tests/
 uv.lock
 .pytest_cache
+.env
