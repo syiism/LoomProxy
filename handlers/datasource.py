@@ -27,9 +27,10 @@ class DatasourceHandler(BaseHandler):
         sources =  {
             "番茄（兔兔）": ["tutu", "fq"],
             "番茄（沐凡）": ["mufan", "fq"],
-            "番茄（落幕）": ["luomu", ""]
+            "番茄（落幕）": ["luomu", ""],
+            "QQ阅读（落幕）": ["qq_luomu"]
         }
-        names = ["番茄（兔兔）", "番茄（沐凡）", "番茄（落幕）"]
-        fileNames = {'fq': ['fq_moduleMap.json', 'fq_sytjs.json', 'fq_categorys.json']}
+        names = ["番茄（兔兔）", "番茄（沐凡）", "番茄（落幕）", "QQ阅读（落幕）"]
+        fileNames = {'fq': ['fq_moduleMap', 'fq_sytjs', 'fq_categorys']}
         
         return DatasourcesResponse(names=names, sources=sources, fileNames=fileNames)
