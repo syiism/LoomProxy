@@ -45,20 +45,14 @@ uv run python app.py
 │   ├── __init__.py           # 自动发现 handler 模块
 │   ├── datafiles.py          # /data 端点
 │   ├── datasource.py         # /datasources 端点
-│   ├── tutu/                 # tutu 数据源
-│   │   ├── __init__.py
-│   │   ├── search.py
-│   │   ├── detail.py
-│   │   ├── chapter.py
-│   │   ├── content.py
-│   │   └── explore.py
-│   └── mufan/                # mufan 数据源
-│       ├── __init__.py
-│       ├── search.py
-│       ├── detail.py
-│       ├── chapter.py
-│       ├── content.py
-│       └── explore.py
+│   ├── tutu/                 # 番茄（兔兔）
+│   ├── mufan/                # 番茄（沐凡）
+│   ├── fq_xinghai/           # 番茄（星海）
+│   ├── luomu/                # 番茄（落幕）
+│   ├── jingluo/              # 番茄（鲸落）
+│   ├── qq_luomu/             # QQ阅读（落幕）
+│   ├── qm_luomu/             # 七猫（落幕）
+│   └── sq_luomu/             # 书旗（落幕）
 ├── tests/
 │   ├── conftest.py
 │   └── test_content.py
@@ -106,22 +100,14 @@ handlers/ → base/ + utils/ (具体实现)
 |------|------|
 | `/datasources` | 数据源列表 |
 | `/data` | 静态数据文件（`?source=fq&name=fq_moduleMap`） |
-| `/tutu/search` | tutu 搜索 |
-| `/tutu/detail` | tutu 详情 |
-| `/tutu/chapter` | tutu 章节 |
-| `/tutu/content` | tutu 内容（自动识别类型分发） |
-| `/tutu/recommend` | tutu 首页推荐 |
-| `/tutu/rank` | tutu 排行榜 |
-| `/tutu/related` | tutu 相关作品 |
-| `/tutu/author` | tutu 作者作品 |
-| `/mufan/search` | mufan 搜索 |
-| `/mufan/detail` | mufan 详情 |
-| `/mufan/chapter` | mufan 章节 |
-| `/mufan/content` | mufan 内容（自动识别类型分发） |
-| `/mufan/front` | mufan 发现页分类 |
-| `/mufan/landing` | mufan 分类书籍列表 |
-| `/mufan/recommend` | mufan 首页推荐 |
-| `/mufan/rank` | mufan 排行榜 |
+| `/tutu/*` | 番茄（兔兔）搜索/详情/章节/内容/推荐/排行/相关/作者 |
+| `/mufan/*` | 番茄（沐凡）搜索/详情/章节/内容/发现/分类/推荐/排行 |
+| `/fq_xinghai/*` | 番茄（星海）搜索/详情/章节/内容/推荐/排行 |
+| `/luomu/*` | 番茄（落幕）搜索/详情/章节/内容 |
+| `/jingluo/*` | 番茄（鲸落）搜索/详情/章节/内容 |
+| `/qq_luomu/*` | QQ阅读（落幕）搜索/详情/章节/内容 |
+| `/qm_luomu/*` | 七猫（落幕）搜索/详情/章节/内容 |
+| `/sq_luomu/*` | 书旗（落幕）搜索/详情/章节/内容 |
 
 ## 编码规范
 

@@ -86,8 +86,14 @@ handlers/ → base/ + utils/ (具体实现)
 │   ├── __init__.py           # 自动发现 handler 模块
 │   ├── datafiles.py          # /data 端点
 │   ├── datasource.py         # /datasources 端点
-│   ├── tutu/                 # tutu 数据源
-│   └── mufan/                # mufan 数据源
+│   ├── tutu/                 # 番茄（兔兔）
+│   ├── mufan/                # 番茄（沐凡）
+│   ├── fq_xinghai/           # 番茄（星海）
+│   ├── luomu/                # 番茄（落幕）
+│   ├── jingluo/              # 番茄（鲸落）
+│   ├── qq_luomu/             # QQ阅读（落幕）
+│   ├── qm_luomu/             # 七猫（落幕）
+│   └── sq_luomu/             # 书旗（落幕）
 ├── tests/
 │   ├── conftest.py
 │   └── test_content.py
@@ -109,7 +115,7 @@ handlers/ → base/ + utils/ (具体实现)
 
 ## 已实现的数据源
 
-### tutu
+### tutu（番茄（兔兔））
 
 | 接口 | 路径 | 参数 |
 |------|------|------|
@@ -122,13 +128,13 @@ handlers/ → base/ + utils/ (具体实现)
 | 相关作品 | `/tutu/related` | `base_url`, `book_id` |
 | 作者作品 | `/tutu/author` | `base_url`, `author_id` |
 
-内容接口自动根据 `book_id` 识别类型分发。
+内容接口自动根据 `book_id` 识别类型分发。API 前缀 `/api/v1`。
 
 #### tutu 搜索数据解析
 
 - `parse_tab_item`：递归解析 `search_tabs`，收集 `book_data`（书籍）/ `video_data`（视频）/ `abstract` 节点
 
-### mufan
+### mufan（番茄（沐凡））
 
 | 接口 | 路径 | 参数 |
 |------|------|------|
@@ -141,7 +147,70 @@ handlers/ → base/ + utils/ (具体实现)
 | 首页推荐 | `/mufan/recommend` | `base_url`, `tab_type`, `offset` |
 | 排行榜 | `/mufan/rank` | `base_url`, `genre_tab`, `algo_type`, `offset`, `limit` |
 
-内容接口自动根据 `book_id` 识别类型分发。
+内容接口自动根据 `book_id` 识别类型分发。API 前缀 `/api`。
+
+### fq_xinghai（番茄（星海））
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/fq_xinghai/search` | `base_url`, `query`, `offset`, `tab_type` |
+| 详情 | `/fq_xinghai/detail` | `base_url`, `book_id` |
+| 章节 | `/fq_xinghai/chapter` | `base_url`, `book_id` |
+| 内容 | `/fq_xinghai/content` | `base_url`, `book_id`, `item_id`, `tone_id`, `quality` |
+| 首页推荐 | `/fq_xinghai/recommend` | `base_url`, `tab_type`, `offset` |
+| 排行榜 | `/fq_xinghai/rank` | `base_url`, `book_id`, `offset`, `genre_tab`, `rank_sub_info_id`, `algo_type` |
+
+- API 前缀 `/api/v1`，所有接口带 `filter=none` 参数
+- 内容：音频响应格式为平铺 list `[{"main_url","backup_url",...}]`；视频响应格式为 `{"play":{"play_url","decrypt_url","cek",...}}`
+
+### luomu（番茄（落幕））
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/luomu/search` | `base_url`, `query`, `offset`, `count`, `tab_type` |
+| 详情 | `/luomu/detail` | `base_url`, `book_id` |
+| 章节 | `/luomu/chapter` | `base_url`, `book_id` |
+| 内容 | `/luomu/content` | `base_url`, `book_id`, `item_id`, `tone_id`, `quality` |
+
+API 无统一前缀，`normalize_api_base(base_url, "")`。
+
+### jingluo（番茄（鲸落））
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/jingluo/search` | `base_url`, `query`, `offset`, `count`, `tab_type` |
+| 详情 | `/jingluo/detail` | `base_url`, `book_id` |
+| 章节 | `/jingluo/chapter` | `base_url`, `book_id` |
+| 内容 | `/jingluo/content` | `base_url`, `book_id`, `item_id`, `tone_id`, `quality` |
+
+API 无统一前缀，`normalize_api_base(base_url, "")`。章节使用 `real_chapter_order` 字段。
+
+### qq_luomu（QQ阅读（落幕））
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/qq_luomu/search` | `base_url`, `query`, `offset` |
+| 详情 | `/qq_luomu/detail` | `base_url`, `book_id` |
+| 章节 | `/qq_luomu/chapter` | `base_url`, `book_id` |
+| 内容 | `/qq_luomu/content` | `base_url`, `book_id`, `item_id` |
+
+### qm_luomu（七猫（落幕））
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/qm_luomu/search` | `base_url`, `query`, `offset` |
+| 详情 | `/qm_luomu/detail` | `base_url`, `book_id` |
+| 章节 | `/qm_luomu/chapter` | `base_url`, `book_id` |
+| 内容 | `/qm_luomu/content` | `base_url`, `book_id`, `item_id` |
+
+### sq_luomu（书旗（落幕））
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/sq_luomu/search` | `base_url`, `query`, `offset` |
+| 详情 | `/sq_luomu/detail` | `base_url`, `book_id` |
+| 章节 | `/sq_luomu/chapter` | `base_url`, `book_id` |
+| 内容 | `/sq_luomu/content` | `base_url`, `book_id`, `item_id` |
 
 #### 番茄系类型识别
 
