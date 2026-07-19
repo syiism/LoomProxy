@@ -11,14 +11,12 @@ from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
 
 def build_kind(item: dict[str, Any]) -> str:
     parts = []
-    status = item.get("is_over", "0")
-    parts.append("完结" if status == "1" else "连载")
     score = item.get("score", "")
     if score:
         parts.append(f"{score}分")
     sub = item.get("sub_title", "")
     if sub:
-        parts.append(sub)
+        parts.append(','.join(sub.split('・')))
     return ",".join(parts)
 
 
@@ -28,7 +26,7 @@ def build_book_item(item: dict[str, Any]) -> BookItem:
         name=item.get("title", ""),
         author=item.get("author", ""),
         kind=build_kind(item),
-        wordCount=item.get("words_num", "0"),
+        wordCount='',
         lastChapter="",
         intro=item.get("intro", ""),
         coverUrl=item.get("image_link", ""),

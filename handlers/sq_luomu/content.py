@@ -23,11 +23,13 @@ class SqLuomuContentHandler(ContentBaseHandler):
         item_id = kwargs.get("item_id", "")
 
         url = f"{base_url}/content?source=书旗&book_id={book_id}&item_id={item_id}&tab=小说"
+        print(url)
         try:
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
                 resp = await client.get(url)
             resp.raise_for_status()
             data = resp.json().get("data", {})
+            print(data)
             return ContentResponse(contentType="novel", data=dict(data))
         except Exception as e:
             return ContentResponse(contentType="error", data={"message": str(e)})

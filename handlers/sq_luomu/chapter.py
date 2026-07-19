@@ -3,17 +3,26 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
+from datetime import datetime, timedelta, timezone
 
 from base.base import HandlerRegistry
 from base.chapterBase import ChapterBaseHandler, ChapterItem, ChapterResponse
 from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
 
+TZ_SHANGHAI = timezone(timedelta(hours=8))
 
-def build_chapter_item(item: dict[str, Any]) -> ChapterItem:
+def build_chapter_item(item: dict[str, Any], volumeName: str) -> ChapterItem:
+    ts = item.get("chapterUpdateTime")
+    last_update = ""
+    if ts:
+        try:
+            last_update = datetime.fromtimestamp(int(ts), tz=TZ_SHANGHAI).strftime("%Y-%m-%d")
+        except (ValueError, TypeError):
+            pass
     return ChapterItem(
         title=item.get("chapterName", ""),
-        itemId=str(item.get("chapterId", "")),
-        chapterInfo=str(item.get("chapterUpdateTime", "")),
+        itemId=str(item.get("chapterUrl", "")),
+        chapterInfo=f"{volumeName} - {last_update}",
     )
 
 
@@ -38,7 +47,8 @@ class SqLuomuChapterHandler(ChapterBaseHandler):
         volume_list = body.get("data", {}).get("chapterList", [])
         chapter_list: list[ChapterItem] = []
         for vol in volume_list:
+            volumeName = vol.get("volumeName", "")
             for item in vol.get("volumeList", []):
                 if item.get("chapterId"):
-                    chapter_list.append(build_chapter_item(item))
+                    chapter_list.append(build_chapter_item(item, volumeName=volumeName))
         return ChapterResponse(chapterList=chapter_list, nextTocUrl=None)

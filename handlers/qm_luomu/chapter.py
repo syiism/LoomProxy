@@ -11,9 +11,9 @@ from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
 
 def build_chapter_item(item: dict[str, Any]) -> ChapterItem:
     return ChapterItem(
-        title=item.get("title", ""),
-        itemId=str(item.get("id", "")),
-        chapterInfo=item.get("index", ""),
+        title=item.get("chapterName", ""),
+        itemId=str(item.get("chapterUrl", "")),
+        chapterInfo=item.get("chapterUpdateTime", ""),
     )
 
 

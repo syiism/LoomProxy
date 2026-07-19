@@ -54,7 +54,9 @@ async def _fetch_video(api_base: str, item_id: str, tab: str) -> ContentResponse
             resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
-        return ContentResponse(contentType="video", data=dict(data))
+        return ContentResponse(contentType="video", data={
+            "content": (api_base + data.get('video_url', '')).replace('apiapi', 'api')
+            })
     except Exception as e:
         return ContentResponse(contentType="error", data={"message": str(e)})
 
@@ -64,8 +66,8 @@ class LuomuContentHandler(ContentBaseHandler):
     path = "/luomu/content"
     name = "luomu_content"
     methods = ["GET"]
-    query_params = ["base_url", "book_id", "item_id", "tab", "tone_id", "quality"]
-    description = "luomu 统一内容（自动识别类型分发：小说/漫画/听书/短剧/漫剧，source=番茄硬编码）"
+    query_params = ["base_url", "book_id", "item_id", "tone_id", "quality"]
+    description = "luomu 统一内容（自动识别类型分发：小说/漫画/听书/短剧/漫剧，source=番茄 硬编码）"
 
     async def handle(self, **kwargs: Any) -> ContentResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api")
@@ -73,7 +75,7 @@ class LuomuContentHandler(ContentBaseHandler):
         tab = kwargs.get("tab", "小说")
 
         try:
-            url = f"{base_url}/detail?source=番茄&book_id={book_id}&tab={tab}"
+            url = f"{base_url}/detail?source=番茄&book_id={book_id}"
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
                 resp = await client.get(url)
             resp.raise_for_status()
@@ -90,5 +92,9 @@ class LuomuContentHandler(ContentBaseHandler):
         elif book_type == "tingshu":
             return await _fetch_audio(api_base=base_url, item_id=item_id, tone_id=kwargs.get("tone_id", "1"))
         elif book_type in ("duanju", "manju"):
-            return await _fetch_video(api_base=base_url, item_id=item_id, tab=tab)
+            TAPMAP = {
+                "duanju": "短剧",
+                "manju": "漫剧"
+            }
+            return await _fetch_video(api_base=base_url, item_id=item_id, tab=TAPMAP[book_type])
         return ContentResponse(contentType="error", data={"message": f"未知书籍类型: {book_type}"})

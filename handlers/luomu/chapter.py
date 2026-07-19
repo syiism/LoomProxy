@@ -38,15 +38,14 @@ class LuomuChapterHandler(ChapterBaseHandler):
     path = "/luomu/chapter"
     name = "luomu_chapter"
     methods = ["GET"]
-    query_params = ["base_url", "book_id", "tab"]
+    query_params = ["base_url", "book_id"]
     description = "luomu 章节"
 
     async def handle(self, **kwargs: Any) -> ChapterResponse:
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api")
         book_id = kwargs.get("book_id", "")
-        tab = kwargs.get("tab", "小说")
 
-        url = f"{base_url}/directory?source=番茄&book_id={book_id}&tab={tab}"
+        url = f"{base_url}/directory?source=番茄&book_id={book_id}"
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url)
         resp.raise_for_status()

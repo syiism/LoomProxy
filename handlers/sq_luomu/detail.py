@@ -73,7 +73,7 @@ class SqLuomuDetailHandler(DetailBaseHandler):
             readCount="",
             source="书旗",
             intro=d.get("intro", ""),
-            copyright="",
+            copyright=d.get("cpName", "无"),
             bookReview="无",
             coverUrl=d.get("imgUrl", ""),
             lastChapter=chapter_list[-1]["volumeList"][-1]["chapterName"] if chapter_list and chapter_list[-1].get("volumeList") else "",
