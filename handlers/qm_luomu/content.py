@@ -25,7 +25,7 @@ class QmLuomuContentHandler(ContentBaseHandler):
         url = f"{base_url}/content?source=七猫&book_id={book_id}&item_id={item_id}&tab=小说"
         try:
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
+                resp = await self.fetch(client, url)
             resp.raise_for_status()
             data = resp.json().get("data", {})
             return ContentResponse(contentType="novel", data=dict(data))

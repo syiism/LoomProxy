@@ -25,7 +25,7 @@ class QQLuomuContentHandler(ContentBaseHandler):
         url = f"{base_url}/content?source=QQ阅读&book_id={book_id}&item_id={item_id}&tab=小说"
         try:
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
+                resp = await self.fetch(client, url)
             resp.raise_for_status()
             content_list = resp.json().get("data", {}).get("content", [])
             content = "\n".join(content_list) if isinstance(content_list, list) else str(content_list)

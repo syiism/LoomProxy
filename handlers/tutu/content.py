@@ -11,11 +11,11 @@ from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
 from utils.fq_utils import _detect_book_type
 
 
-async def _fetch_novel(base_url: str, item_id: str) -> ContentResponse:
+async def _fetch_novel(fetch, base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/chapters/{item_id}/novel"
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await fetch(client, url)
         resp.raise_for_status()
         content = resp.json().get("data", {}).get("content", "")
     except Exception as e:
@@ -23,11 +23,11 @@ async def _fetch_novel(base_url: str, item_id: str) -> ContentResponse:
     return ContentResponse(contentType="novel", data={"content": content})
 
 
-async def _fetch_audio(base_url: str, item_id: str, book_id: str, tone_id: str) -> ContentResponse:
+async def _fetch_audio(fetch, base_url: str, item_id: str, book_id: str, tone_id: str) -> ContentResponse:
     async def _fetch(tid: str) -> dict[str, Any]:
         url = f"{base_url.rstrip('/')}/audio/play?item_ids={item_id}&book_id={book_id}&tone_id={tid}"
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.post(url)
+            resp = await fetch(client, url, method="POST")
         resp.raise_for_status()
         return resp.json()
 
@@ -67,11 +67,11 @@ async def _fetch_audio(base_url: str, item_id: str, book_id: str, tone_id: str) 
         return ContentResponse(contentType="error", data={"message": str(e)})
 
 
-async def _fetch_manga(base_url: str, item_id: str) -> ContentResponse:
+async def _fetch_manga(fetch, base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/manga/{item_id}"
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await fetch(client, url)
         resp.raise_for_status()
         images = resp.json().get("data", {}).get("images", [])
     except Exception as e:
@@ -82,15 +82,15 @@ async def _fetch_manga(base_url: str, item_id: str) -> ContentResponse:
     return ContentResponse(contentType="manga", data={"content": content, "total": len(images)})
 
 
-async def _fetch_video(base_url: str, video_ids: str, quality: str) -> ContentResponse:
+async def _fetch_video(fetch, base_url: str, video_ids: str, quality: str) -> ContentResponse:
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
             if not quality:
                 url = f"{base_url.rstrip('/')}/videos/multi?video_ids={video_ids}&list_qualities=1"
-                resp = await client.get(url)
+                resp = await fetch(client, url)
             else:
                 url = f"{base_url.rstrip('/')}/videos/multi/{video_ids}?quality={quality}"
-                resp = await client.get(url)
+                resp = await fetch(client, url)
         resp.raise_for_status()
         body = resp.json()
 
@@ -137,7 +137,7 @@ class TutuContentHandler(ContentBaseHandler):
         try:
             url = f"{base_url.rstrip('/')}/books/{book_id}"
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
+                resp = await self.fetch(client, url)
             resp.raise_for_status()
             book_type = _detect_book_type(resp.json().get("data", {}))
         except Exception as e:
@@ -145,11 +145,13 @@ class TutuContentHandler(ContentBaseHandler):
 
         if book_type == "xiaoshuo":
             return await _fetch_novel(
+                fetch=self.fetch,
                 base_url=base_url,
                 item_id=kwargs.get("item_id", ""),
             )
         elif book_type == "tingshu":
             return await _fetch_audio(
+                fetch=self.fetch,
                 base_url=base_url,
                 item_id=kwargs.get("item_id", ""),
                 book_id=book_id,
@@ -157,11 +159,13 @@ class TutuContentHandler(ContentBaseHandler):
             )
         elif book_type == "manhua":
             return await _fetch_manga(
+                fetch=self.fetch,
                 base_url=base_url,
                 item_id=kwargs.get("item_id", ""),
             )
         elif book_type in ("duanju", "manju"):
             return await _fetch_video(
+                fetch=self.fetch,
                 base_url=base_url,
                 video_ids=kwargs.get("item_id", ""),
                 quality=kwargs.get("quality", "720p"),

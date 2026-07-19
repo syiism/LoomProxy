@@ -49,7 +49,7 @@ class QQLuomuSearchHandler(SearchBaseHandler):
         url = f"{base_url}/search?source=QQ阅读&page={page}&query={query}&tab=小说"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         body = resp.json()
 

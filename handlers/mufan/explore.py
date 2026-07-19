@@ -24,7 +24,7 @@ class MufanFrontHandler(ContentBaseHandler):
 
         url = f"{base_url}/front?tab={tab}"
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         return ContentResponse(contentType="categories", data=data)
@@ -53,7 +53,7 @@ class MufanLandingHandler(ExploreBaseHandler):
                 url += f"&{param}={val}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         book_info = resp.json().get("data", {}).get("book_info", [])
         book_list = [build_book_item(item) for item in book_info if item.get("book_id")]
@@ -76,7 +76,7 @@ class MufanRecommendHandler(ExploreBaseHandler):
         url = f"{base_url}/recommend/homepage?tab_type={tab_type}&offset={offset}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         body = resp.json()
 
@@ -103,7 +103,7 @@ class MufanRankHandler(ExploreBaseHandler):
         url = f"{base_url}/bookmall/cell/change?genre_tab={genre_tab}&algo_type={algo_type}&offset={offset}&limit={limit}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         body = resp.json()
 

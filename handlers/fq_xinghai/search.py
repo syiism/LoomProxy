@@ -53,7 +53,7 @@ class XinghaiSearchHandler(SearchBaseHandler):
         url = f"{base_url}/search?query={query}&offset={offset}&filter=none&tab_type={tab_type}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         data = resp.json()
 

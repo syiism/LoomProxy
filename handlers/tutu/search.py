@@ -65,7 +65,7 @@ class TutuSearchHandler(SearchBaseHandler):
         if query.isdigit() and len(query) > 5:
             url = f"{api_base}/books/{query}"
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
+                resp = await self.fetch(client, url)
             resp.raise_for_status()
             detail_data = resp.json().get("data", {})
             item = build_book_item(detail_data)
@@ -74,7 +74,7 @@ class TutuSearchHandler(SearchBaseHandler):
         url = f"{api_base}/search?query={query}&offset={offset}&count={count}&tab_type={tab_type}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            data = await client.get(url)
+            data = await self.fetch(client, url)
         data.raise_for_status()
         data = data.json()
 

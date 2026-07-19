@@ -26,7 +26,7 @@ class JingluoSearchHandler(SearchBaseHandler):
         url = f"{base_url}/search?query={query}&tab_type={tab_type}&offset={offset}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         body = resp.json()
 

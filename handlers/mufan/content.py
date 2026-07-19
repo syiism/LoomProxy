@@ -10,11 +10,11 @@ from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
 from utils.fq_utils import _detect_book_type
 
 
-async def _fetch_novel(api_base: str, item_id: str) -> ContentResponse:
+async def _fetch_novel(fetch, api_base: str, item_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/content?item_ids={item_id}"
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await fetch(client, url)
         resp.raise_for_status()
         content = resp.json().get("data", {}).get("content", "")
     except Exception as e:
@@ -22,11 +22,11 @@ async def _fetch_novel(api_base: str, item_id: str) -> ContentResponse:
     return ContentResponse(contentType="novel", data={"content": content})
 
 
-async def _fetch_audio(api_base: str, item_id: str, tone_id: str) -> ContentResponse:
+async def _fetch_audio(fetch, api_base: str, item_id: str, tone_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/content?item_ids={item_id}&ts=听书&tone_id={tone_id}"
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await fetch(client, url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         return ContentResponse(contentType="audio", data={
@@ -39,11 +39,11 @@ async def _fetch_audio(api_base: str, item_id: str, tone_id: str) -> ContentResp
         return ContentResponse(contentType="error", data={"message": str(e)})
 
 
-async def _fetch_manga(api_base: str, item_id: str) -> ContentResponse:
+async def _fetch_manga(fetch, api_base: str, item_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/manga?item_ids={item_id}"
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await fetch(client, url)
         resp.raise_for_status()
         images = resp.json().get("data", {}).get("images", [])
         content = "".join(f'<img src="{img}">\n' for img in images)
@@ -52,13 +52,13 @@ async def _fetch_manga(api_base: str, item_id: str) -> ContentResponse:
         return ContentResponse(contentType="error", data={"message": str(e)})
 
 
-async def _fetch_video(api_base: str, item_id: str, book_id: str, quality: str) -> ContentResponse:
+async def _fetch_video(fetch, api_base: str, item_id: str, book_id: str, quality: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/video?item_id={item_id}&book_id={book_id}&type=json"
     if quality:
         url += f"&quality={quality}"
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await fetch(client, url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         return ContentResponse(contentType="video", data={
@@ -87,7 +87,7 @@ class MufanContentHandler(ContentBaseHandler):
         try:
             url = f"{api_base}/detail?book_id={book_id}"
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
+                resp = await self.fetch(client, url)
             resp.raise_for_status()
             book_type = _detect_book_type(resp.json().get("data", {}))
         except Exception as e:
@@ -96,11 +96,11 @@ class MufanContentHandler(ContentBaseHandler):
         item_id = kwargs.get("item_id", "")
 
         if book_type == "xiaoshuo":
-            return await _fetch_novel(api_base, item_id)
+            return await _fetch_novel(fetch=self.fetch, api_base=api_base, item_id=item_id)
         elif book_type == "tingshu":
-            return await _fetch_audio(api_base, item_id, kwargs.get("tone_id", "0"))
+            return await _fetch_audio(fetch=self.fetch, api_base=api_base, item_id=item_id, tone_id=kwargs.get("tone_id", "0"))
         elif book_type == "manhua":
-            return await _fetch_manga(api_base, item_id)
+            return await _fetch_manga(fetch=self.fetch, api_base=api_base, item_id=item_id)
         elif book_type in ("duanju", "manju"):
-            return await _fetch_video(api_base, item_id, book_id, kwargs.get("quality", ""))
+            return await _fetch_video(fetch=self.fetch, api_base=api_base, item_id=item_id, book_id=book_id, quality=kwargs.get("quality", ""))
         return ContentResponse(contentType="error", data={"message": f"未知书籍类型: {book_type}"})

@@ -48,7 +48,7 @@ class MufanChapterHandler(ChapterBaseHandler):
 
         url = f"{api_base}/directory?book_id={book_id}"
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         raw_list = data.get("item_data_list", [])

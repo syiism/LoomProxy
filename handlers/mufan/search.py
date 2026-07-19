@@ -46,7 +46,7 @@ class MufanSearchHandler(SearchBaseHandler):
         if query.isdigit() and len(query) > 5:
             url = f"{api_base}/detail?book_id={query}"
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await client.get(url)
+                resp = await self.fetch(client, url)
             resp.raise_for_status()
             item = build_book_item(resp.json().get("data", {}))
             return SearchResponse(bookList=[item])
@@ -58,7 +58,7 @@ class MufanSearchHandler(SearchBaseHandler):
             url += f"&search_type={search_type}"
 
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         body = resp.json()
         data = (body or {}).get("data") or {}

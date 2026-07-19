@@ -47,7 +47,7 @@ class LuomuChapterHandler(ChapterBaseHandler):
 
         url = f"{base_url}/directory?source=番茄&book_id={book_id}"
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await self.fetch(client, url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         inner = data.get("data", {})
