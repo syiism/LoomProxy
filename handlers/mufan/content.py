@@ -2,19 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.contentBase import ContentBaseHandler, ContentResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
+from utils.fq_utils import normalize_api_base
 from utils.fq_utils import _detect_book_type
 
 
 async def _fetch_novel(fetch, api_base: str, item_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/content?item_ids={item_id}"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         content = resp.json().get("data", {}).get("content", "")
     except Exception as e:
@@ -25,8 +22,7 @@ async def _fetch_novel(fetch, api_base: str, item_id: str) -> ContentResponse:
 async def _fetch_audio(fetch, api_base: str, item_id: str, tone_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/content?item_ids={item_id}&ts=听书&tone_id={tone_id}"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         return ContentResponse(contentType="audio", data={
@@ -42,8 +38,7 @@ async def _fetch_audio(fetch, api_base: str, item_id: str, tone_id: str) -> Cont
 async def _fetch_manga(fetch, api_base: str, item_id: str) -> ContentResponse:
     url = f"{api_base.rstrip('/')}/manga?item_ids={item_id}"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         images = resp.json().get("data", {}).get("images", [])
         content = "".join(f'<img src="{img}">\n' for img in images)
@@ -57,8 +52,7 @@ async def _fetch_video(fetch, api_base: str, item_id: str, book_id: str, quality
     if quality:
         url += f"&quality={quality}"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         return ContentResponse(contentType="video", data={
@@ -86,8 +80,7 @@ class MufanContentHandler(ContentBaseHandler):
 
         try:
             url = f"{api_base}/detail?book_id={book_id}"
-            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await self.fetch(client, url)
+            resp = await self.fetch(url)
             resp.raise_for_status()
             book_type = _detect_book_type(resp.json().get("data", {}))
         except Exception as e:

@@ -1,10 +1,8 @@
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.searchBase import SearchBaseHandler, SearchResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, build_book_item, normalize_api_base
+from utils.fq_utils import build_book_item, normalize_api_base
 
 
 def parse_search_results(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -52,8 +50,7 @@ class XinghaiSearchHandler(SearchBaseHandler):
 
         url = f"{base_url}/search?query={query}&offset={offset}&filter=none&tab_type={tab_type}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 

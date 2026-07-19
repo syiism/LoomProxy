@@ -3,11 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.detailBase import BookDetail, DetailBaseHandler
-from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, normalize_api_base
+from utils.fq_utils import TZ_SHANGHAI, normalize_api_base
 
 
 def _format_word_count(wc: Any) -> str:
@@ -46,8 +44,7 @@ class SqLuomuDetailHandler(DetailBaseHandler):
         book_id = kwargs.get("book_id", "")
 
         url = f"{base_url}/detail?source=书旗&book_id={book_id}&tab=小说"
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         d = resp.json().get("data", {})
 

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from typing import Any
-
-import httpx
 from datetime import datetime, timedelta, timezone
 
 from base.base import HandlerRegistry
 from base.chapterBase import ChapterBaseHandler, ChapterItem, ChapterResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
+from utils.fq_utils import normalize_api_base
 
 TZ_SHANGHAI = timezone(timedelta(hours=8))
 
@@ -39,8 +37,7 @@ class SqLuomuChapterHandler(ChapterBaseHandler):
         book_id = kwargs.get("book_id", "")
 
         url = f"{base_url}/directory?source=书旗&book_id={book_id}&tab=小说"
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         body = resp.json()
 

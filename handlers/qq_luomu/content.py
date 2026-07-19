@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.contentBase import ContentBaseHandler, ContentResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
+from utils.fq_utils import normalize_api_base
 
 
 @HandlerRegistry.register
@@ -24,8 +22,7 @@ class QQLuomuContentHandler(ContentBaseHandler):
 
         url = f"{base_url}/content?source=QQ阅读&book_id={book_id}&item_id={item_id}&tab=小说"
         try:
-            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await self.fetch(client, url)
+            resp = await self.fetch(url)
             resp.raise_for_status()
             content_list = resp.json().get("data", {}).get("content", [])
             content = "\n".join(content_list) if isinstance(content_list, list) else str(content_list)

@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.searchBase import BookItem, SearchBaseHandler, SearchResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, normalize_api_base
+from utils.fq_utils import normalize_api_base
 
 
 def build_kind(item: dict[str, Any]) -> str:
@@ -48,8 +46,7 @@ class QQLuomuSearchHandler(SearchBaseHandler):
 
         url = f"{base_url}/search?source=QQ阅读&page={page}&query={query}&tab=小说"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         body = resp.json()
 

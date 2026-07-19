@@ -4,12 +4,9 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-import httpx
-
 from base.searchBase import BookItem
 
 TZ_SHANGHAI = timezone(timedelta(hours=8))
-DEFAULT_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 
 GENDER_MAP = {"0": "女生", "1": "男生", "2": "出版"}
 CREATION_STATUS_MAP = {"0": "完结", "1": "连载", "4": "断更", "-1": "未知"}

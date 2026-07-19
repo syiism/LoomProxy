@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.contentBase import ContentBaseHandler, ContentResponse
 from base.exploreBase import ExploreBaseHandler, ExploreResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, build_book_item, normalize_api_base
+from utils.fq_utils import build_book_item, normalize_api_base
 
 
 @HandlerRegistry.register
@@ -23,8 +21,7 @@ class MufanFrontHandler(ContentBaseHandler):
         tab = kwargs.get("tab", "0")
 
         url = f"{base_url}/front?tab={tab}"
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json().get("data", {})
         return ContentResponse(contentType="categories", data=data)
@@ -52,8 +49,7 @@ class MufanLandingHandler(ExploreBaseHandler):
             if val:
                 url += f"&{param}={val}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         book_info = resp.json().get("data", {}).get("book_info", [])
         book_list = [build_book_item(item) for item in book_info if item.get("book_id")]
@@ -75,8 +71,7 @@ class MufanRecommendHandler(ExploreBaseHandler):
 
         url = f"{base_url}/recommend/homepage?tab_type={tab_type}&offset={offset}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         body = resp.json()
 
@@ -102,8 +97,7 @@ class MufanRankHandler(ExploreBaseHandler):
 
         url = f"{base_url}/bookmall/cell/change?genre_tab={genre_tab}&algo_type={algo_type}&offset={offset}&limit={limit}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         body = resp.json()
 

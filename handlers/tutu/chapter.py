@@ -4,7 +4,7 @@ from typing import Any
 
 from base.chapterBase import ChapterBaseHandler, ChapterResponse, ChapterItem
 from base.base import HandlerRegistry
-from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, normalize_api_base
+from utils.fq_utils import TZ_SHANGHAI, normalize_api_base
 
 
 def parse_chapter_list_item(chapter_list_with_volume: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -66,12 +66,9 @@ class TutuChapterHandler(ChapterBaseHandler):
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
         book_id = kwargs.get("book_id", "")
 
-        import httpx
-
         url = f"{base_url}/books/{book_id}/directory/fanqie"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 

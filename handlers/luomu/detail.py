@@ -3,11 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.detailBase import BookDetail, DetailBaseHandler
-from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, _detect_book_type, book_type_code, normalize_api_base
+from utils.fq_utils import TZ_SHANGHAI, _detect_book_type, book_type_code, normalize_api_base
 
 
 def _format_time(ts_str: str) -> str:
@@ -61,8 +59,7 @@ class LuomuDetailHandler(DetailBaseHandler):
         tab = kwargs.get("tab", "小说")
 
         url = f"{base_url}/detail?source=番茄&book_id={book_id}&tab={tab}"
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         d = resp.json().get("data", {})
 

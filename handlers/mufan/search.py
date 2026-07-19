@@ -3,11 +3,9 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import quote
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.searchBase import SearchBaseHandler, SearchResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, build_book_item, normalize_api_base, strip_search_prefix
+from utils.fq_utils import build_book_item, normalize_api_base, strip_search_prefix
 
 
 def extract_book_data(tabs: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -45,8 +43,7 @@ class MufanSearchHandler(SearchBaseHandler):
 
         if query.isdigit() and len(query) > 5:
             url = f"{api_base}/detail?book_id={query}"
-            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await self.fetch(client, url)
+            resp = await self.fetch(url)
             resp.raise_for_status()
             item = build_book_item(resp.json().get("data", {}))
             return SearchResponse(bookList=[item])
@@ -57,8 +54,7 @@ class MufanSearchHandler(SearchBaseHandler):
         if search_type:
             url += f"&search_type={search_type}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         body = resp.json()
         data = (body or {}).get("data") or {}

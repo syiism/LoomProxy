@@ -2,18 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.contentBase import ContentBaseHandler, ContentResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, _detect_book_type, normalize_api_base
+from utils.fq_utils import _detect_book_type, normalize_api_base
 
 
 async def _fetch_novel(fetch, base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/chapters/{item_id}?filter=none&source=content"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         content = resp.json().get("data", {}).get("content", "")
     except Exception as e:
@@ -24,8 +21,7 @@ async def _fetch_novel(fetch, base_url: str, item_id: str) -> ContentResponse:
 async def _fetch_audio(fetch, base_url: str, item_id: str, book_id: str, tone_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/media/audio?item_id={item_id}&book_id={book_id}&tone_id={tone_id}&filter=none"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         data = resp.json()
         items = data.get("data") or []
@@ -46,8 +42,7 @@ async def _fetch_audio(fetch, base_url: str, item_id: str, book_id: str, tone_id
 async def _fetch_manga(fetch, base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/chapters/{item_id}/manga"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         images = resp.json().get("data", {}).get("images", [])
     except Exception as e:
@@ -61,8 +56,7 @@ async def _fetch_manga(fetch, base_url: str, item_id: str) -> ContentResponse:
 async def _fetch_video(fetch, base_url: str, item_id: str) -> ContentResponse:
     url = f"{base_url.rstrip('/')}/media/video?item_id={item_id}"
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await fetch(client, url)
+        resp = await fetch(url)
         resp.raise_for_status()
         data = resp.json()
         play = data.get("data", {}).get("play", {})
@@ -92,8 +86,7 @@ class XinghaiContentHandler(ContentBaseHandler):
 
         try:
             url = f"{base_url.rstrip('/')}/books/{book_id}?filter=none&source=detail"
-            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await self.fetch(client, url)
+            resp = await self.fetch(url)
             resp.raise_for_status()
             book_type = _detect_book_type(resp.json().get("data", {}))
         except Exception as e:

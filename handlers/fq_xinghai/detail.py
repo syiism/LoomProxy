@@ -4,11 +4,9 @@ import json
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.detailBase import BookDetail, DetailBaseHandler
-from utils.fq_utils import DEFAULT_TIMEOUT, _detect_book_type, book_type_code, normalize_api_base
+from utils.fq_utils import _detect_book_type, book_type_code, normalize_api_base
 
 
 def _format_time(ts_str: str) -> str:
@@ -81,8 +79,7 @@ class XinghaiDetailHandler(DetailBaseHandler):
 
         url = f"{base_url.rstrip('/')}/books/{book_id}?filter=none&source=detail"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         d = resp.json()["data"]
 

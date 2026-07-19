@@ -1,10 +1,8 @@
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.searchBase import SearchBaseHandler, SearchResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, build_book_item, normalize_api_base, strip_search_prefix
+from utils.fq_utils import build_book_item, normalize_api_base, strip_search_prefix
 
 
 def parse_tab_item(tab_item: Any) -> list[dict[str, Any]]:
@@ -64,8 +62,7 @@ class TutuSearchHandler(SearchBaseHandler):
 
         if query.isdigit() and len(query) > 5:
             url = f"{api_base}/books/{query}"
-            async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-                resp = await self.fetch(client, url)
+            resp = await self.fetch(url)
             resp.raise_for_status()
             detail_data = resp.json().get("data", {})
             item = build_book_item(detail_data)
@@ -73,8 +70,7 @@ class TutuSearchHandler(SearchBaseHandler):
 
         url = f"{api_base}/search?query={query}&offset={offset}&count={count}&tab_type={tab_type}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            data = await self.fetch(client, url)
+        data = await self.fetch(url)
         data.raise_for_status()
         data = data.json()
 

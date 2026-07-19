@@ -11,6 +11,8 @@ from typing import Any, ClassVar
 
 import httpx
 
+DEFAULT_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+
 
 class HandlerRegistry:
     _items: ClassVar[dict[str, type["BaseHandler"]]] = {}
@@ -44,12 +46,14 @@ class BaseHandler(ABC):
 
     async def fetch(
         self,
-        client: httpx.AsyncClient,
         url: str,
         method: str = "GET",
         **kwargs: Any,
     ) -> httpx.Response:
-        return await client.request(method, url, **kwargs)
+        timeout = kwargs.pop("timeout", DEFAULT_TIMEOUT)
+        follow_redirects = kwargs.pop("follow_redirects", True)
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=follow_redirects) as client:
+            return await client.request(method, url, **kwargs)
 
     @abstractmethod
     async def handle(self, **kwargs: Any) -> dict[str, Any]:

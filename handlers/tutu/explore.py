@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
-
 from base.base import HandlerRegistry
 from base.exploreBase import ExploreBaseHandler, ExploreResponse
-from utils.fq_utils import DEFAULT_TIMEOUT, build_book_item, extract_book_data, normalize_api_base
+from utils.fq_utils import build_book_item, extract_book_data, normalize_api_base
 
 
 @HandlerRegistry.register
@@ -24,8 +22,7 @@ class TutuRecommendHandler(ExploreBaseHandler):
 
         url = f"{base_url}/recommend/homepage?tab_type={tab_type}&offset={offset}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 
@@ -56,8 +53,7 @@ class TutuRankHandler(ExploreBaseHandler):
             f"&rank_sub_info_id={rank_sub_info_id}&algo_type={algo_type}"
         )
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 
@@ -81,8 +77,7 @@ class TutuRelatedHandler(ExploreBaseHandler):
 
         url = f"{base_url}/books/{book_id}/related"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 
@@ -105,8 +100,7 @@ class TutuAuthorHandler(ExploreBaseHandler):
 
         url = f"{base_url}/authors/{author_id}"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 

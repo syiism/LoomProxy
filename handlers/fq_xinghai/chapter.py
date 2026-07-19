@@ -2,11 +2,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-import httpx
-
 from base.chapterBase import ChapterBaseHandler, ChapterResponse, ChapterItem
 from base.base import HandlerRegistry
-from utils.fq_utils import DEFAULT_TIMEOUT, TZ_SHANGHAI, normalize_api_base
+from utils.fq_utils import TZ_SHANGHAI, normalize_api_base
 
 
 def build_chapter_item(item: dict[str, Any]) -> ChapterItem:
@@ -48,8 +46,7 @@ class XinghaiChapterHandler(ChapterBaseHandler):
 
         url = f"{base_url}/books/{book_id}/toc?filter=none&source=web"
 
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         data = resp.json()
 

@@ -6,7 +6,7 @@ from typing import Any
 
 from base.detailBase import BookDetail, DetailBaseHandler
 from base.base import HandlerRegistry
-from utils.fq_utils import DEFAULT_TIMEOUT, _detect_book_type, book_type_code, normalize_api_base
+from utils.fq_utils import _detect_book_type, book_type_code, normalize_api_base
 
 
 def _format_time(ts_str: str) -> str:
@@ -84,11 +84,8 @@ class TutuDetailHandler(DetailBaseHandler):
         base_url = normalize_api_base(kwargs.get("base_url", ""), "/api/v1")
         book_id = kwargs.get("book_id", "")
 
-        import httpx
-
         url = f"{base_url.rstrip('/')}/books/{book_id}"
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await self.fetch(client, url)
+        resp = await self.fetch(url)
         resp.raise_for_status()
         d = resp.json()["data"]
 
