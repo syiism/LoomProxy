@@ -3,6 +3,5 @@ __pycache__/
 .venv/
 .DS_Store
 tests/
-uv.lock
 .pytest_cache
 .env

@@ -21,7 +21,7 @@ from confMagr import ConfMagr
 from handlers import BaseHandler, get_all_handlers
 from utils.network import is_safe_url
 
-logger = logging.getLogger("api-proxy")
+logger = logging.getLogger("LoomProxy")
 
 # ------ 已知数据源的预期路由（按数据源+动作）------
 EXPECTED_ROUTES: dict[str, list[str]] = {
@@ -210,7 +210,7 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
 
 # ------ 组装 ------
 def create_app() -> FastAPI:
-    fastapi_app = FastAPI(title="api-proxy")
+    fastapi_app = FastAPI(title="LoomProxy")
     _register_exception_handlers(fastapi_app)
     registered_routes = register_handlers(fastapi_app)
     _validate_routes(registered_routes)
@@ -218,7 +218,7 @@ def create_app() -> FastAPI:
     @fastapi_app.get("/", include_in_schema=True, tags=["health"])
     async def root_health() -> dict[str, Any]:
         return {
-            "app": "api-proxy",
+            "app": "LoomProxy",
             "status": "ok",
             "endpoints": registered_routes,
         }

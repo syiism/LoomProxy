@@ -1,7 +1,7 @@
 [project]
-name = "api-proxy"
+name = "LoomProxy"
 version = "0.1.0"
-description = "Add your description here"
+description = "基于 FastAPI 的 API 代理服务，支持通过 handler 机制扩展多种数据源的搜索、详情、章节、内容、探索接口"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
