@@ -4,7 +4,25 @@ from typing import Any
 
 from base.base import HandlerRegistry
 from base.exploreBase import ExploreBaseHandler, ExploreResponse
-from utils.fq_utils import build_book_item, extract_book_data, normalize_api_base
+from utils.fq_utils import build_book_item, normalize_api_base
+
+
+def parse_recommend_cells(data: dict[str, Any], tab_type: str) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    tab_item = data.get("data", {}).get("tab_item", [])
+    for tab in tab_item:
+        if str(tab.get("tab_type")) != tab_type:
+            continue
+        for cell in tab.get("cell_data", []):
+            for inner in cell.get("cell_data", []):
+                if isinstance(inner, dict):
+                    for entry in inner.get("book_data", []):
+                        if isinstance(entry, dict) and entry.get("book_id"):
+                            items.append(entry)
+                    for entry in inner.get("video_data", []):
+                        if isinstance(entry, dict) and entry.get("series_id"):
+                            items.append(entry)
+    return items
 
 
 @HandlerRegistry.register
@@ -26,7 +44,7 @@ class XinghaiRecommendHandler(ExploreBaseHandler):
         resp.raise_for_status()
         data = resp.json()
 
-        raw_list = extract_book_data(data)
+        raw_list = parse_recommend_cells(data, tab_type)
         book_list = [build_book_item(item) for item in raw_list]
         return ExploreResponse(bookList=book_list)
 
