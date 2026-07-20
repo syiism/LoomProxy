@@ -2,6 +2,5 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
-tests/
 .pytest_cache
 .env
