@@ -1,4 +1,4 @@
-# api-proxy
+# LoomProxy
 
 基于 FastAPI 的 API 代理服务，支持通过 handler 机制扩展多种数据源的搜索、详情、章节、内容、探索接口。
 

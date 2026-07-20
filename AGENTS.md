@@ -1,4 +1,4 @@
-# api-proxy AGENTS.md
+# LoomProxy AGENTS.md
 
 ## 项目概述
 
