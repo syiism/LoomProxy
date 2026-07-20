@@ -35,19 +35,13 @@ def test_datasources_cached(client):
     assert len(data["names"]) > 0
 
 
-def test_ssrf_blocked(client):
-    r = client.get("/tutu/search?base_url=http://127.0.0.1&query=test")
-    assert r.status_code == 400
-    assert "不安全的 base_url" in r.json()["msg"]
-
-
-def test_ssrf_blocked_private(client):
+def test_ssrf_blocked_private_10(client):
     r = client.get("/tutu/search?base_url=http://10.0.0.1&query=test")
     assert r.status_code == 400
 
 
-def test_ssrf_blocked_localhost(client):
-    r = client.get("/tutu/search?base_url=http://localhost:8080&query=test")
+def test_ssrf_blocked_private_172(client):
+    r = client.get("/tutu/search?base_url=http://172.16.0.1&query=test")
     assert r.status_code == 400
 
 

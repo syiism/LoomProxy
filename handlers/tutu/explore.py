@@ -7,6 +7,22 @@ from base.exploreBase import ExploreBaseHandler, ExploreResponse
 from utils.fq_utils import build_book_item, normalize_api_base
 
 
+def _extract_cell_entries(cell: Any) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    if not isinstance(cell, dict):
+        return items
+    for entry in cell.get("book_data", []):
+        if isinstance(entry, dict) and entry.get("book_id"):
+            items.append(entry)
+    for entry in cell.get("video_data", []):
+        if isinstance(entry, dict) and entry.get("series_id"):
+            items.append(entry)
+    if not items:
+        for inner in cell.get("cell_data", []):
+            items.extend(_extract_cell_entries(inner))
+    return items
+
+
 def parse_recommend_cells(data: dict[str, Any], tab_type: str) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     tab_item = data.get("data", {}).get("tab_item", [])
@@ -14,14 +30,7 @@ def parse_recommend_cells(data: dict[str, Any], tab_type: str) -> list[dict[str,
         if str(tab.get("tab_type")) != tab_type:
             continue
         for cell in tab.get("cell_data", []):
-            for inner in cell.get("cell_data", []):
-                if isinstance(inner, dict):
-                    for entry in inner.get("book_data", []):
-                        if isinstance(entry, dict) and entry.get("book_id"):
-                            items.append(entry)
-                    for entry in inner.get("video_data", []):
-                        if isinstance(entry, dict) and entry.get("series_id"):
-                            items.append(entry)
+            items.extend(_extract_cell_entries(cell))
     return items
 
 
