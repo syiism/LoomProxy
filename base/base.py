@@ -43,6 +43,7 @@ class BaseHandler(ABC):
     methods: list[str] = ["GET"]
     query_params: list[str] = []
     description: str = ""
+    auth_required: bool = True
 
     async def fetch(
         self,

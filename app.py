@@ -19,6 +19,7 @@ from pydantic import BaseModel, create_model, field_validator
 
 from confMagr import ConfMagr
 from handlers import BaseHandler, get_all_handlers
+from utils.auth import AuthException, verify_api_key
 from utils.network import is_safe_url
 
 logger = logging.getLogger("LoomProxy")
@@ -137,7 +138,11 @@ def _validate_base_url(kwargs: dict[str, Any]) -> None:
 def register_handlers(fastapi_app: FastAPI) -> list[dict[str, Any]]:
     """遍历注册表中的所有 handler 注册为路由。"""
     registered: list[dict[str, Any]] = []
-    for item in (_make_endpoint(c) for c in get_all_handlers()):
+    for handler_cls in get_all_handlers():
+        item = _make_endpoint(handler_cls)
+        dependencies = []
+        if getattr(handler_cls, "auth_required", True):
+            dependencies.append(Depends(verify_api_key))
         fastapi_app.add_api_route(
             item["path"],
             item["endpoint"],
@@ -146,6 +151,7 @@ def register_handlers(fastapi_app: FastAPI) -> list[dict[str, Any]]:
             summary=item["summary"],
             description=item["description"],
             response_model=item.get("response_model"),
+            dependencies=dependencies,
         )
         registered.append({
             "path": item["path"],
@@ -197,6 +203,14 @@ def _register_exception_handlers(fastapi_app: FastAPI) -> None:
         return JSONResponse(
             status_code=500,
             content={"code": ConfMagr.ERROR_CODE, "msg": f"数据解析异常：缺少字段 {exc}"},
+        )
+
+    @fastapi_app.exception_handler(AuthException)
+    async def auth_exception_handler(request: Request, exc: AuthException) -> JSONResponse:
+        logger.warning("鉴权失败: %s", exc.detail)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"code": ConfMagr.ERROR_CODE, "msg": f"鉴权失败: {exc.detail}"},
         )
 
     @fastapi_app.exception_handler(Exception)

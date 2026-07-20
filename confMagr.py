@@ -50,3 +50,8 @@ class ConfMagr:
     UTILS_DIRNAME: str = _env("UTILS_DIRNAME", "utils")
     DATA_DIR_SUFFIX: str = _env("DATA_DIR_SUFFIX", "_data")
     DATA_FILE_GLOB: str = _env("DATA_FILE_GLOB", "{source}_*.json")
+
+    # 鉴权
+    AUTH_ENABLED: bool = _env("AUTH_ENABLED", "false").lower() == "true"
+    API_KEYS: list[str] = [k.strip() for k in _env("API_KEYS", "").split(",") if k.strip()]
+    AUTH_WHITELIST: list[str] = [k.strip() for k in _env("AUTH_WHITELIST", "/,/datasources,/data").split(",")]

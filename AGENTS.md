@@ -32,6 +32,7 @@ handlers/ → base/ + utils/ (具体实现)
 | `app.py` | `app.py:91` | `_make_endpoint` 动态生成路由闭包 + Pydantic 查询模型 + SSRF 校验 + 启动验证 |
 | `network.py` | `utils/network.py` | SSRF 防御 `is_safe_url` |
 | `cache.py` | `utils/cache.py` | 内存 LRU 缓存装饰器 `@cached(ttl, maxsize)` |
+| `auth.py` | `utils/auth.py` | API Key 鉴权系统 `verify_api_key` / `AuthException` |
 | `ConfMagr` | `confMagr.py` | 集中配置管理，支持 `.env` 文件覆盖 |
 
 ### 响应模型
@@ -65,6 +66,40 @@ handlers/ → base/ + utils/ (具体实现)
 | 数据源列表 | `GET /datasources` | 返回所有可用数据源名称（@cached 300s） |
 | 静态数据 | `GET /data` | 返回静态 JSON 数据文件（`?source=fq&name=fq_moduleMap`）（@cached 300s） |
 
+### 鉴权系统
+
+`utils/auth.py` 提供基于 API Key 的鉴权，通过 FastAPI 依赖注入 `Depends(verify_api_key)` 自动挂载。
+
+#### 启用方式
+
+在 `.env` 中设置环境变量：
+
+```bash
+AUTH_ENABLED=true
+API_KEYS=key1,key2,key3
+AUTH_WHITELIST=/,/datasources,/data
+```
+
+- **默认关闭**（`AUTH_ENABLED=false`），本地开发无需配置
+- 支持多个 API Key，逗号分隔
+- 白名单路径免鉴权
+
+#### 请求方式
+
+| 方式 | 位置 | 示例 |
+|------|------|------|
+| Header | `X-API-Key` | `curl -H "X-API-Key: mykey" ...` |
+| Query | `api_key` | `curl "http://host/path?api_key=mykey"` |
+
+#### Handler 声明式控制
+
+`BaseHandler` 默认 `auth_required = True`。公共接口可显式关闭：
+
+```python
+class DatasourceHandler(BaseHandler):
+    auth_required = False
+```
+
 ### 安全：SSRF 防御
 
 `app.py` 在 `_make_endpoint` 生成的端点中自动调用 `_validate_base_url`，对每个 `base_url` 参数执行 `is_safe_url` 校验：
@@ -75,10 +110,13 @@ handlers/ → base/ + utils/ (具体实现)
 
 ### 统一异常处理
 
-`app.py` 中 `_register_exception_handlers` 注册 5 个全局 `@exception_handler`：
+`app.py` 中 `_register_exception_handlers` 注册全局 `@exception_handler`：
 
 | 异常 | HTTP 状态码 | 响应体 |
 |------|------------|--------|
+| 异常 | HTTP 状态码 | 响应体 |
+|------|------------|--------|
+| `AuthException` | 401/403 | `{"code": -1, "msg": "鉴权失败: ..."}` |
 | `httpx.HTTPStatusError` | 502 | `{"code": -1, "msg": "上游返回异常状态码 {code}"}` |
 | `httpx.TimeoutException` | 504 | `{"code": -1, "msg": "上游请求超时"}` |
 | `httpx.HTTPError` | 502 | `{"code": -1, "msg": "上游数据异常"}` |
@@ -125,6 +163,7 @@ SERVER_PORT=9090
 ├── utils/                    # 共享工具
 │   ├── __init__.py
 │   ├── fq_utils.py           # 番茄系通用工具函数
+│   ├── auth.py               # API Key 鉴权 (verify_api_key, AuthException)
 │   ├── network.py            # SSRF 防御 (is_safe_url)
 │   ├── cache.py              # 内存 LRU 缓存 (@cached)
 │   └── fq_data/              # 番茄系静态 JSON 数据
@@ -380,6 +419,7 @@ return DatasourcesResponse(names=names, sources=resp)
 ## 编码规范
 
 - **导入路径**：使用绝对导入（`from base.searchBase import ...` / `from utils.fq_utils import ...`）
+- **鉴权**：`BaseHandler` 默认 `auth_required = True`（自动鉴权）；公共接口设置 `auth_required = False` 可跳过鉴权
 - **`**kwargs`**：使用 `kwargs.get("key", default)` 而非 `kwargs["key"]` 或 `.pop()`
 - **时间处理**：时间戳统一 UTC+8，使用 `TZ_SHANGHAI` 常量
 - **异步 HTTP**：使用 `httpx.AsyncClient`，设 `DEFAULT_TIMEOUT`；可调用 `self.fetch(url)` 替代裸 `client.get()`，便于测试 mock

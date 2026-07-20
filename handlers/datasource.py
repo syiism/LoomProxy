@@ -21,6 +21,7 @@ class DatasourceHandler(BaseHandler):
     methods = ["GET"]
     query_params: list[str] = []
     description = "列出所有可用数据源名称"
+    auth_required = False
 
     response_model = DatasourcesResponse
 

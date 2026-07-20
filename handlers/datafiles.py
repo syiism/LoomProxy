@@ -102,6 +102,7 @@ class DataFilesHandler(BaseHandler):
     methods = ["GET"]
     query_params = ["source", "name"]
     description = "静态数据文件。source 指定数据源（如 fq），name 指定文件名（不含后缀）；缺省时列出可用数据源或文件"
+    auth_required = False
     response_model = SourcesResponse | FileListResponse | FileContentResponse | ErrorResponse
 
     @cached(ttl=300)
