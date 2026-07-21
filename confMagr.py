@@ -47,9 +47,8 @@ class ConfMagr:
     ERROR_CODE: int = _env_int("ERROR_CODE", -1)
 
     # 静态数据文件
-    UTILS_DIRNAME: str = _env("UTILS_DIRNAME", "utils")
-    DATA_DIR_SUFFIX: str = _env("DATA_DIR_SUFFIX", "_data")
-    DATA_FILE_GLOB: str = _env("DATA_FILE_GLOB", "{source}_*.json")
+    DATA_DIR: str = _env("DATA_DIR", "data")
+    DATA_FILE_GLOB: str = _env("DATA_FILE_GLOB", "*.json")
 
     # 鉴权
     AUTH_ENABLED: bool = _env("AUTH_ENABLED", "false").lower() == "true"
