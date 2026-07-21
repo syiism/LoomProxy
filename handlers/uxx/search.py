@@ -3,7 +3,7 @@ from typing import Any
 from base.base import HandlerRegistry
 from base.searchBase import SearchBaseHandler, SearchResponse
 
-from .utils import MOBILE_UA, parse_list_html
+from utils.uxx_utils import MOBILE_UA, parse_list_html
 
 
 @HandlerRegistry.register
