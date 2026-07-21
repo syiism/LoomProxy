@@ -29,6 +29,11 @@ uv run python app.py
 ├── app.py                    # 应用入口，自动注册路由
 ├── confMagr.py               # 集中配置管理（支持 .env 覆盖）
 ├── .env.example              # 环境变量模板
+├── data/                     # 静态数据文件（各数据源子目录）
+│   └── fq/                   # 番茄系静态 JSON 数据
+│       ├── fq_categorys.json
+│       ├── fq_moduleMap.json
+│       └── fq_sytjs.json
 ├── base/                     # 抽象层（纯 Pydantic 模型 + 基类）
 │   ├── __init__.py
 │   ├── base.py               # HandlerRegistry, BaseHandler
@@ -41,11 +46,7 @@ uv run python app.py
 │   ├── __init__.py
 │   ├── fq_utils.py           # 番茄系通用工具函数
 │   ├── network.py            # SSRF 防御 (is_safe_url)
-│   ├── cache.py              # 内存 LRU 缓存 (@cached)
-│   └── fq_data/              # 番茄系静态 JSON 数据
-│       ├── fq_categorys.json
-│       ├── fq_moduleMap.json
-│       └── fq_sytjs.json
+│   └── cache.py              # 内存 LRU 缓存 (@cached)
 ├── handlers/                 # 具体实现层
 │   ├── __init__.py           # 自动发现 handler 模块
 │   ├── datafiles.py          # /data 端点
@@ -57,7 +58,8 @@ uv run python app.py
 │   ├── jingluo/              # 番茄（鲸落）
 │   ├── qq_luomu/             # QQ阅读（落幕）
 │   ├── qm_luomu/             # 七猫（落幕）
-│   └── sq_luomu/             # 书旗（落幕）
+│   ├── sq_luomu/             # 书旗（落幕）
+│   └── uxx/                  # 海阔视界
 ├── tests/
 │   ├── conftest.py
 │   └── test_content.py
@@ -148,6 +150,7 @@ SERVER_PORT=9090
 | `/qq_luomu/*` | QQ阅读（落幕）搜索/详情/章节/内容 |
 | `/qm_luomu/*` | 七猫（落幕）搜索/详情/章节/内容 |
 | `/sq_luomu/*` | 书旗（落幕）搜索/详情/章节/内容 |
+| `/uxx/*` | 海阔视界搜索/详情/章节/内容/推荐/分类 |
 
 ## 编码规范
 

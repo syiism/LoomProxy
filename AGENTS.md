@@ -152,6 +152,11 @@ SERVER_PORT=9090
 ├── app.py                    # 应用入口，自动注册路由
 ├── confMagr.py               # 集中配置管理（支持 .env 覆盖）
 ├── .env.example              # 环境变量模板
+├── data/                     # 静态数据文件（各数据源子目录）
+│   └── fq/                   # 番茄系静态 JSON 数据
+│       ├── fq_categorys.json
+│       ├── fq_moduleMap.json
+│       └── fq_sytjs.json
 ├── base/                     # 抽象层（纯 Pydantic 模型 + 基类）
 │   ├── __init__.py
 │   ├── base.py               # HandlerRegistry, BaseHandler
@@ -165,11 +170,7 @@ SERVER_PORT=9090
 │   ├── fq_utils.py           # 番茄系通用工具函数
 │   ├── auth.py               # API Key 鉴权 (verify_api_key, AuthException)
 │   ├── network.py            # SSRF 防御 (is_safe_url)
-│   ├── cache.py              # 内存 LRU 缓存 (@cached)
-│   └── fq_data/              # 番茄系静态 JSON 数据
-│       ├── fq_categorys.json
-│       ├── fq_moduleMap.json
-│       └── fq_sytjs.json
+│   └── cache.py              # 内存 LRU 缓存 (@cached)
 ├── handlers/                 # 具体实现层
 │   ├── __init__.py           # 自动发现 handler 模块
 │   ├── datafiles.py          # /data 端点
@@ -181,7 +182,8 @@ SERVER_PORT=9090
 │   ├── jingluo/              # 番茄（鲸落）
 │   ├── qq_luomu/             # QQ阅读（落幕）
 │   ├── qm_luomu/             # 七猫（落幕）
-│   └── sq_luomu/             # 书旗（落幕）
+│   ├── sq_luomu/             # 书旗（落幕）
+│   └── uxx/                  # 海阔视界
 ├── tests/
 │   ├── conftest.py
 │   ├── test_handlers.py      # 集成测试（SSRF、缓存、健康检查、fetch mock 示范）
@@ -200,7 +202,7 @@ SERVER_PORT=9090
 
 ### 静态数据文件
 
-在 `utils/` 下创建 `{source}_data/` 目录，放入 `{source}_*.json` 文件即可被 `/data` 端点自动发现。
+在 `data/` 下创建 `{source}/` 子目录，放入 `*.json` 文件即可被 `/data` 端点自动发现。
 
 ## 已实现的数据源
 
@@ -301,15 +303,29 @@ API 无统一前缀，`normalize_api_base(base_url, "")`。章节使用 `real_ch
 | 章节 | `/sq_luomu/chapter` | `base_url`, `book_id` |
 | 内容 | `/sq_luomu/content` | `base_url`, `book_id`, `item_id` |
 
+### uxx（海阔视界）
+
+| 接口 | 路径 | 参数 |
+|------|------|------|
+| 搜索 | `/uxx/search` | `query`, `page` |
+| 详情 | `/uxx/detail` | `book_id` |
+| 章节 | `/uxx/chapter` | `book_id` |
+| 内容 | `/uxx/content` | `book_id`, `item_id` |
+| 首页推荐 | `/uxx/recommend` | `tab_type`, `page` |
+| 分类标签 | `/uxx/tabs` | 无 |
+
+- 基础域名：`https://www.uxx001.com`
+- 内容接口自动识别视频/音频/小说类型
+- 所有接口 `auth_required = False`，无需鉴权
+
 #### 番茄系类型识别
 
-| 类型 | 判断条件 |
-|------|---------|
-| `tingshu` 听书 | `book_type == "1"` 或 `genre == "4"` |
-| `manhua` 漫画 | `comic_book_type` 存在或 `genre == "1"` |
-| `duanju` 短剧 | `playlet_book_id` 存在，或 `genre == "205"` 且有 `album_book_order`，或 `genre == "203"` |
-| `manju` 漫剧 | `genre == "205"` 且有 `schedule_mode`（无 `album_book_order`） |
-| `xiaoshuo` 小说 | `is_ebook == "1"` 或 `genre == "0"` |
+| 类型 | 判断条件 | bookTypeCode |
+|------|---------|--------------|
+| `audio` 听书 | `book_type == "1"` 或 `genre == "4"` | 32 |
+| `manga` 漫画 | `comic_book_type` 存在或 `genre == "1"` | 64 |
+| `video` 视频（短剧/漫剧） | `playlet_book_id` 存在，或 `genre == "205"`，或 `genre == "203"` | 4 |
+| `novel` 小说 | `is_ebook == "1"` 或 `genre == "0"` | 8 |
 
 ## 添加数据源方法论
 
@@ -394,7 +410,7 @@ return DatasourcesResponse(names=names, sources=resp)
 
 ### 第六步（可选）：添加静态数据
 
-在 `utils/` 下创建 `{source}_data/` 目录，放入 `{source}_*.json` 文件，`GET /data?source={source}` 自动发现。
+在 `data/` 下创建 `{source}/` 目录，放入 `*.json` 文件，`GET /data?source={source}` 自动发现。
 
 ### 接口设计约定
 
