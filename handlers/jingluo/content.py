@@ -86,12 +86,12 @@ class JingluoContentHandler(ContentBaseHandler):
 
         item_id = kwargs.get("item_id", "")
 
-        if book_type == "xiaoshuo":
+        if book_type == "novel":
             return await _fetch_novel(self.fetch, base_url, item_id)
-        elif book_type == "tingshu":
+        elif book_type == "audio":
             return await _fetch_audio(self.fetch, base_url, item_id, kwargs.get("tone_id", "0"))
-        elif book_type == "manhua":
+        elif book_type == "manga":
             return await _fetch_manga(self.fetch, base_url, item_id)
-        elif book_type in ("duanju", "manju"):
+        elif book_type == "video":
             return await _fetch_video(self.fetch, base_url, item_id, kwargs.get("quality", ""))
         return ContentResponse(contentType="error", data={"message": f"未知书籍类型: {book_type}"})

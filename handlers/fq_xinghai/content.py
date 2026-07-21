@@ -92,13 +92,13 @@ class XinghaiContentHandler(ContentBaseHandler):
         except Exception as e:
             return ContentResponse(contentType="error", data={"message": f"无法获取书籍类型: {e}"})
 
-        if book_type == "xiaoshuo":
+        if book_type == "novel":
             return await _fetch_novel(
                 self.fetch,
                 base_url=base_url,
                 item_id=kwargs.get("item_id", ""),
             )
-        elif book_type == "tingshu":
+        elif book_type == "audio":
             return await _fetch_audio(
                 self.fetch,
                 base_url=base_url,
@@ -106,13 +106,13 @@ class XinghaiContentHandler(ContentBaseHandler):
                 book_id=book_id,
                 tone_id=kwargs.get("tone_id", "0"),
             )
-        elif book_type == "manhua":
+        elif book_type == "manga":
             return await _fetch_manga(
                 self.fetch,
                 base_url=base_url,
                 item_id=kwargs.get("item_id", ""),
             )
-        elif book_type in ("duanju", "manju"):
+        elif book_type == "video":
             return await _fetch_video(
                 self.fetch,
                 base_url=base_url,

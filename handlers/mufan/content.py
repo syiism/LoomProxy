@@ -88,12 +88,12 @@ class MufanContentHandler(ContentBaseHandler):
 
         item_id = kwargs.get("item_id", "")
 
-        if book_type == "xiaoshuo":
+        if book_type == "novel":
             return await _fetch_novel(fetch=self.fetch, api_base=api_base, item_id=item_id)
-        elif book_type == "tingshu":
+        elif book_type == "audio":
             return await _fetch_audio(fetch=self.fetch, api_base=api_base, item_id=item_id, tone_id=kwargs.get("tone_id", "0"))
-        elif book_type == "manhua":
+        elif book_type == "manga":
             return await _fetch_manga(fetch=self.fetch, api_base=api_base, item_id=item_id)
-        elif book_type in ("duanju", "manju"):
+        elif book_type == "video":
             return await _fetch_video(fetch=self.fetch, api_base=api_base, item_id=item_id, book_id=book_id, quality=kwargs.get("quality", ""))
         return ContentResponse(contentType="error", data={"message": f"未知书籍类型: {book_type}"})
