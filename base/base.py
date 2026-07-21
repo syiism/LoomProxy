@@ -41,7 +41,7 @@ class BaseHandler(ABC):
     path: str = ""
     name: str | None = None
     methods: list[str] = ["GET"]
-    query_params: list[str] = []
+    query_params: list[str] = ["api_key"]
     description: str = ""
     auth_required: bool = True
 
