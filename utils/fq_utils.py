@@ -114,11 +114,10 @@ def build_book_item(item: dict[str, Any]) -> BookItem:
 
 
 _BOOK_TYPE_CODE_MAP = {
-    "xiaoshuo": 8,
-    "tingshu": 32,
-    "duanju": 4,
-    "manju": 4,
-    "manhua": 64,
+    "novel": 8,
+    "audio": 32,
+    "video": 4,
+    "manga": 64,
 }
 
 
@@ -132,21 +131,21 @@ def _detect_book_type(data: dict[str, Any]) -> str:
     album_book_order = data.get("album_book_order")
 
     if book_type == "1" or genre == "4":
-        return "tingshu"
+        return "audio"
     if comic_book_type is not None or genre == "1":
-        return "manhua"
+        return "manga"
     if playlet_book_id is not None:
-        return "duanju"
+        return "video"
     if genre == "205" and schedule_mode is not None:
         if album_book_order is not None:
-            return "duanju"
-        return "manju"
+            return "video"
+        return "video"
     if genre == "203":
-        return "duanju"
+        return "video"
     if is_ebook == "1" or genre == "0":
-        return "xiaoshuo"
-    return "xiaoshuo"
+        return "novel"
+    return "novel"
 
 
 def book_type_code(book_type: str) -> int:
-    return _BOOK_TYPE_CODE_MAP.get(book_type, 8)
+    return _BOOK_TYPE_CODE_MAP.get(book_type, 1)
