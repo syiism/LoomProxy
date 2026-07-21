@@ -66,9 +66,9 @@ def _list_sources() -> list[str]:
 
 
 _FILE_DESCRIPTIONS: dict[str, str] = {
-    "fq_moduleMap": "模式映射（tab_type → bd_id）",
-    "fq_sytjs": "推荐首页 tab_type 列表",
-    "fq_categorys": "分类/榜单配置（genre_tab → 子榜列表）",
+    "moduleMap": "模式映射（tab_type → bd_id）",
+    "sytjs": "推荐首页 tab_type 列表",
+    "categorys": "分类/榜单配置（genre_tab → 子榜列表）",
 }
 
 
