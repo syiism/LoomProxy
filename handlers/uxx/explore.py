@@ -6,14 +6,6 @@ from base.exploreBase import ExploreBaseHandler, ExploreResponse
 from utils.uxx_utils import MOBILE_UA, parse_list_html
 
 
-TAB_TYPES = [
-    {"tab_type": 1, "title": "视频"},
-    {"tab_type": 2, "title": "小说"},
-    {"tab_type": 3, "title": "有声"},
-    {"tab_type": 4, "title": "漫画"},
-]
-
-
 @HandlerRegistry.register
 class UxxRecommendHandler(ExploreBaseHandler):
     path = "/uxx/recommend"
@@ -36,16 +28,3 @@ class UxxRecommendHandler(ExploreBaseHandler):
         book_list = parse_list_html(html)
         
         return ExploreResponse(bookList=book_list)
-
-
-@HandlerRegistry.register
-class UxxTabsHandler(ExploreBaseHandler):
-    path = "/uxx/tabs"
-    name = "uxx_tabs"
-    methods = ["GET"]
-    query_params = []
-    description = "海阔视界分类标签列表"
-    auth_required = False
-
-    async def handle(self, **kwargs: Any) -> ExploreResponse:
-        return ExploreResponse(bookList=TAB_TYPES)
