@@ -8,6 +8,7 @@ dependencies = [
     "beautifulsoup4>=4.15.0",
     "fastapi>=0.139.0",
     "httpx>=0.28.1",
+    "lxml>=6.1.1",
     "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
     "uvicorn>=0.51.0",
