@@ -11,7 +11,7 @@ from base.base import HandlerRegistry, BaseHandler
 from confMagr import ConfMagr
 from utils.cache import cached
 
-_UTILS_DIR = Path(__file__).resolve().parent.parent / ConfMagr.UTILS_DIRNAME
+_DATA_ROOT = Path(__file__).resolve().parent.parent / ConfMagr.DATA_DIR
 
 
 class FileInfo(BaseModel):
@@ -52,14 +52,16 @@ class ErrorResponse(BaseModel):
 
 
 def _data_dir(source: str) -> Path:
-    return _UTILS_DIR / f"{source}_data"
+    return _DATA_ROOT / source
 
 
 def _list_sources() -> list[str]:
     sources: list[str] = []
-    for p in _UTILS_DIR.iterdir():
-        if p.is_dir() and p.name.endswith(ConfMagr.DATA_DIR_SUFFIX):
-            sources.append(p.name.removesuffix(ConfMagr.DATA_DIR_SUFFIX))
+    if not _DATA_ROOT.is_dir():
+        return sources
+    for p in _DATA_ROOT.iterdir():
+        if p.is_dir():
+            sources.append(p.name)
     return sorted(sources)
 
 
@@ -84,7 +86,7 @@ def _list_files(source: str) -> list[FileInfo]:
     d = _data_dir(source)
     if not d.is_dir():
         return []
-    return [_file_info(p) for p in sorted(d.glob(ConfMagr.DATA_FILE_GLOB.format(source=source)))]
+    return [_file_info(p) for p in sorted(d.glob(ConfMagr.DATA_FILE_GLOB))]
 
 
 def _load_json(source: str, name: str) -> Any:
