@@ -57,7 +57,7 @@ def parse_list_html(html_text: str) -> list[BookItem]:
             views = view_elements[0].strip() if view_elements else ''
 
         # kind: state, category, update_time, views 拼接
-        kind_parts = [p for p in [state, category, update_time, views] if p]
+        kind_parts = [p for p in [state, category, update_time, '👁'+views] if p]
         kind = ','.join(kind_parts)
 
         book_id = extract_book_id(href)
